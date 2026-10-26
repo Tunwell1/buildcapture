@@ -66,17 +66,18 @@ the build height and `capture.maxSize`.
 
 With the client mod installed you can also edit the box directly. Hold the
 face-edit key (left Alt by default; rebindable under Controls) and a small panel
-shows the size, the coordinates, the gestures and the last step. Moving needs no
-aiming and matches the placement preview:
+shows the size, the coordinates, the gestures and the last step. The box behaves
+like an object:
 
-- scroll moves the whole box along your view;
-- `Ctrl`+scroll moves it up or down;
-- the arrow keys move it one block, `Page Up` / `Page Down` move it vertically;
-- `Shift` turns any of those into five-block steps.
+- drag it with the left mouse button: it slides on the ground plane under the
+  cursor and keeps its height;
+- `Ctrl`+wheel moves it up or down;
+- the arrow keys nudge it one block, `Page Up` / `Page Down` move it vertically;
+- `Shift` gives five-block steps.
 
-Resizing needs a face: drag it with the left mouse button, or hold Shift while
-dragging to move the whole box instead. The face under the crosshair is
-highlighted, through terrain if necessary.
+Resizing needs a face: scroll over it to push that side in or out, or `Shift`+
+drag the face for a freehand resize. The face under the crosshair is highlighted,
+through terrain if necessary.
 
 When you look at a face almost straight on, the crosshair cannot express depth,
 so the face is pushed or pulled by moving the mouse up and down while dragging.

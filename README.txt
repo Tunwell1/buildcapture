@@ -124,22 +124,21 @@ Interactive editing
 Hold the face-edit key (left Alt by default; rebind it under Controls). A small
 panel appears in the corner with the size, the coordinates and the gestures, so
 the controls are visible instead of scrolling away in the chat. It also echoes
-the last step ("Moved: up", "Resizing: north"), which makes the wheel
-predictable.
+the last step ("Moved: up", "Resizing: north").
 
-Moving does not need you to point at anything; it follows the same gestures as
-the placement preview and is relative to where you look:
+The box behaves like an object: grab it with the left mouse button and drag. It
+slides on the ground plane under the cursor, so it follows the mouse rather than
+the camera, and keeps its current height.
 
-- scroll moves the whole box along your view, one block per notch;
-- `Ctrl`+scroll moves it up or down;
-- the arrow keys move it one block, `Page Up` / `Page Down` move it vertically;
-- hold `Shift` for five-block steps.
+- `Ctrl`+wheel moves it up or down, from any view direction.
+- The arrow keys nudge it one block, `Page Up` / `Page Down` move it vertically.
+- Hold `Shift` for five-block steps.
 
-Resizing needs a face, because it is the only unambiguous way to say which side
-should change:
+Resizing needs a face, because a side is the only unambiguous way to say which
+end should grow:
 
-- drag a face with the left mouse button to move that side;
-- hold `Shift` while dragging to move the whole box instead.
+- scroll over a face to push that side in or out, `Shift` for five blocks;
+- `Shift`+drag a face for a freehand resize.
 
 A face you look at straight on is pushed or pulled by looking up or down while
 dragging: pointing at a surface cannot express distance along its normal. The

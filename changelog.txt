@@ -5,12 +5,12 @@ Build Capture changelog
 -----
 
 Selection
-- The box no longer has to be aimed at to be moved. With the face-edit key
-  held, the scroll wheel now moves the whole box along your view and Ctrl+scroll
-  moves it up or down, matching the placement preview. The arrow keys move it one
-  block and Page Up / Page Down cover the vertical axis; Shift gives five-block
-  steps. Resizing still drags a face, which is the only unambiguous way to pick a
-  side.
+- The box is moved by dragging it with the mouse now: grab it with the left
+  button and it slides on the ground plane under the cursor, keeping its height,
+  instead of being nudged by the wheel relative to the view. Ctrl+wheel still
+  moves it up or down, and the arrow keys stay for exact steps.
+- The wheel resizes the face under the crosshair again, Shift+wheel by five
+  blocks, and Shift+drag on a face gives a freehand resize.
 - The corner panel shows the selection while the face-edit key is held: size,
   coordinates, the available gestures and the last step ("Moved: up",
   "Resizing: north"). The controls no longer scroll away in the chat.

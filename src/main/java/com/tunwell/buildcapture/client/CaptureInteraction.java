@@ -25,15 +25,15 @@ import javax.annotation.Nullable;
 
 /**
  * Interactive editing of the capture box. Hold {@link CaptureKeys#FACE_EDIT}
- * (left alt by default) and the box follows the same gestures as the placement
- * ghost: scroll moves it along the view, Ctrl+scroll moves it up and down, the
- * arrow keys move it one block, and shift multiplies the step. Dragging a face
- * with the left mouse button still resizes that face, and shift+drag moves the
- * whole box.
+ * (left alt by default) and drag the box with the left mouse button: it slides
+ * on the ground plane under the cursor, so it goes where the mouse goes instead
+ * of where the camera points. The wheel resizes the face under the crosshair,
+ * Ctrl+wheel moves the box up and down, shift+drag on a face resizes it by
+ * hand, and the arrow keys nudge it one exact block.
  *
- * <p>Moving no longer depends on pointing at a particular face, so it works the
- * same no matter where the camera looks. Resizing does need a face, because that
- * is the only unambiguous way to say which side should grow.</p>
+ * <p>Moving is a drag because that is how the box behaves like an object;
+ * resizing needs a face, because a side is the only unambiguous way to say
+ * which end should grow.</p>
  *
  * <p>The client only ever sends complete bounds. The server clamps them to the
  * build height and {@code capture.maxSize} and sends the result back, so the
@@ -61,6 +61,14 @@ public final class CaptureInteraction {
     private static boolean depthMode;
     private static float dragPitch;
     private static double pitchAccumulator;
+
+    @Nullable
+    private static Vector3d dragAnchor;
+    @Nullable
+    private static int[] dragStartMin;
+    @Nullable
+    private static int[] dragStartMax;
+    private static double dragPlaneY;
 
     @Nullable
     private static String actionDirection;
@@ -280,13 +288,24 @@ public final class CaptureInteraction {
             return;
         }
         int step = (int) Math.signum(delta) * (Screen.hasShiftDown() ? 5 : 1);
-        // Same gestures as the placement ghost: the wheel pushes the box away
-        // from the player, Ctrl turns it into the vertical axis. No aiming.
+        // Vertical has no face of its own, so it works from any view direction.
         if (Screen.hasControlDown()) {
             translate(1, step);
-        } else {
-            moveForward(step);
+            event.setCanceled(true);
+            return;
         }
+        Face face = pick();
+        if (face == null) {
+            return;
+        }
+        ClientCaptureBox.Bounds bounds = ClientCaptureBox.bounds();
+        if (bounds == null) {
+            return;
+        }
+        // The wheel resizes the face under the crosshair; dragging the box body
+        // is what moves it now.
+        int current = face.side > 0 ? bounds.max[face.axis] : bounds.min[face.axis];
+        moveFace(face.axis, face.side, current + step * face.side);
         event.setCanceled(true);
     }
 
@@ -347,7 +366,9 @@ public final class CaptureInteraction {
         }
         dragging = true;
         dragAxis = face.axis;
-        dragSide = Screen.hasShiftDown() ? 0 : face.side;
+        // Dragging the box body moves it; holding shift turns the drag into a
+        // face resize, which is the precise version of the wheel.
+        dragSide = Screen.hasShiftDown() ? face.side : 0;
         dragNormal = face.side;
         dragOrigin = face.hit;
         dragFace = face.side > 0 ? bounds.max[face.axis] + 1 : bounds.min[face.axis];
@@ -357,6 +378,16 @@ public final class CaptureInteraction {
         pitchAccumulator = 0.0D;
         hoverAxis = face.axis;
         hoverSide = face.side;
+        if (dragSide == 0) {
+            dragStartMin = bounds.min.clone();
+            dragStartMax = bounds.max.clone();
+            // Drag on the horizontal plane through the grabbed point, so the
+            // box stays under the cursor whatever height on the box was hit.
+            dragPlaneY = face.hit.y;
+            dragAnchor = planePoint(dragPlaneY,
+                    minecraft.player.getEyePosition(1.0F),
+                    minecraft.player.getViewVector(1.0F));
+        }
     }
 
     private static void endDrag() {
@@ -365,11 +396,21 @@ public final class CaptureInteraction {
         lastDelta = 0;
         depthMode = false;
         hoverAxis = -1;
+        dragAnchor = null;
+        dragStartMin = null;
+        dragStartMax = null;
     }
 
     private static void updateDrag() {
         Minecraft minecraft = Minecraft.getInstance();
-        if (dragOrigin == null || minecraft.player == null) {
+        if (minecraft.player == null) {
+            return;
+        }
+        if (dragSide == 0) {
+            updateBoxDrag(minecraft);
+            return;
+        }
+        if (dragOrigin == null) {
             return;
         }
         Vector3d eye = minecraft.player.getEyePosition(1.0F);
@@ -393,18 +434,69 @@ public final class CaptureInteraction {
         }
 
         int boundary = (int) Math.round(point[dragAxis]);
-        if (dragSide == 0) {
-            int delta = boundary - dragFace;
-            int step = delta - lastDelta;
-            if (step == 0) {
-                return;
-            }
-            lastDelta = delta;
-            translate(dragAxis, step);
-        } else {
-            int coordinate = dragSide > 0 ? boundary - 1 : boundary;
-            moveFace(dragAxis, dragSide, coordinate);
+        int coordinate = dragSide > 0 ? boundary - 1 : boundary;
+        moveFace(dragAxis, dragSide, coordinate);
+    }
+
+    /**
+     * Slides the whole box on the plane the grab started on. The baseline is
+     * the point the drag started at, so the box follows the mouse without
+     * drifting; if the view swings too close to the horizon to project onto the
+     * plane, the baseline is dropped and rebuilt on the next usable frame, so
+     * the box never jumps.
+     */
+    private static void updateBoxDrag(Minecraft minecraft) {
+        ClientCaptureBox.Bounds bounds = ClientCaptureBox.bounds();
+        if (bounds == null || minecraft.player == null) {
+            return;
         }
+        Vector3d point = planePoint(dragPlaneY,
+                minecraft.player.getEyePosition(1.0F),
+                minecraft.player.getViewVector(1.0F));
+        if (point == null) {
+            dragAnchor = null;
+            return;
+        }
+        if (dragAnchor == null || dragStartMin == null || dragStartMax == null) {
+            dragAnchor = point;
+            dragStartMin = bounds.min.clone();
+            dragStartMax = bounds.max.clone();
+            return;
+        }
+        int dx = (int) Math.round(point.x - dragAnchor.x);
+        int dz = (int) Math.round(point.z - dragAnchor.z);
+        if (dx == 0 && dz == 0) {
+            return;
+        }
+        int[] min = dragStartMin.clone();
+        int[] max = dragStartMax.clone();
+        min[0] += dx;
+        max[0] += dx;
+        min[2] += dz;
+        max[2] += dz;
+        if (Math.abs(dx) >= Math.abs(dz)) {
+            note(0, dx, false);
+        } else {
+            note(2, dz, false);
+        }
+        submit(min, max, 0, 0);
+    }
+
+    /**
+     * Where the view ray meets a horizontal plane. Looking too close to the
+     * horizon gives no usable point: the ray never meets the plane in front of
+     * the player, or meets it so far away that the mapping explodes.
+     */
+    @Nullable
+    private static Vector3d planePoint(double planeY, Vector3d eye, Vector3d view) {
+        if (Math.abs(view.y) < 0.05D) {
+            return null;
+        }
+        double distance = (planeY - eye.y) / view.y;
+        if (distance <= 0.0D || distance > MAX_DISTANCE) {
+            return null;
+        }
+        return eye.add(view.scale(distance));
     }
 
     /** Resets the gesture baseline when switching between drag mappings. */
@@ -441,10 +533,6 @@ public final class CaptureInteraction {
             return;
         }
         pitchAccumulator -= steps;
-        if (dragSide == 0) {
-            translate(dragAxis, steps * dragNormal);
-            return;
-        }
         ClientCaptureBox.Bounds bounds = ClientCaptureBox.bounds();
         if (bounds == null) {
             return;
