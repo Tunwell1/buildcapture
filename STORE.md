@@ -1,4 +1,4 @@
-# Build Capture - store copy (1.1.3)
+# Build Capture - store copy (1.1.4)
 
 Ready-to-paste text for Modrinth and CurseForge. Keep it in sync with the
 released jar.
@@ -8,14 +8,14 @@ released jar.
 | Field | Value |
 | --- | --- |
 | Name | Build Capture |
-| Version | 1.1.3 |
+| Version | 1.1.4 |
 | Minecraft | 1.16.5 |
 | Loader | Forge 36.2.42 or newer (1.16.x) |
 | License | All Rights Reserved |
 | Environment | Client and server |
 | Modrinth categories | Utility, Management |
 | CurseForge categories | Server Utility, Utility & QoL |
-| File | `buildcapture-1.1.3.jar` |
+| File | `buildcapture-1.1.4.jar` |
 | Mod id | `buildcapture` |
 
 Short summary (Modrinth / CurseForge "Summary", under 256 characters):
@@ -98,10 +98,11 @@ box, and marks world-only, library-only and mirrored entries with a coloured dot
 translucent block models inside a green footprint box at the target spot (red
 when it does not fit the build height), and only the nearest surface is drawn,
 so you can still see the world behind it. Structures over 150,000 blocks fall
-back to the box alone. Move it with the scroll wheel, use `Ctrl`+scroll for the
-vertical axis, the arrow keys for single blocks and `R` to rotate. Right-click
-(or Enter) places it; middle-click or Escape cancels. Nothing is written until
-you confirm, and the server re-checks the id, distance and build height.
+back to the box alone. Rotate it with the scroll wheel (or `R`), use `Ctrl`+scroll
+to change the height, `Shift`+scroll to move it five blocks and the arrow keys
+for single blocks. Right-click (or Enter) places it; middle-click or Escape
+cancels. Nothing is written until you confirm, and the server re-checks the id,
+distance and build height.
 
 **Import .nbt** opens the system file dialog. You can also drop one or more
 `.nbt` files onto the game window. The client uploads the file to the server in

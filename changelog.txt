@@ -1,6 +1,16 @@
 Build Capture changelog
 =======================
 
+1.1.4
+-----
+
+Preview
+- The scroll wheel turns the placement ghost a quarter turn per notch, the same
+  turn as `R`; scrolling the other way turns it back. `Shift`+wheel moves it five
+  blocks and `Ctrl`+wheel changes the height, so nothing the wheel used to do is
+  gone. The current rotation is echoed in the action bar ("Rotation: 90°"), so
+  the wheel does not turn the build silently.
+
 1.1.3
 -----
 

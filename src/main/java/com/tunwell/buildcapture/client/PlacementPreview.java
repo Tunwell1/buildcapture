@@ -131,12 +131,36 @@ public final class PlacementPreview {
         move(-facing.getStepZ() * blocks, 0, facing.getStepX() * blocks);
     }
 
-    public static void rotate() {
-        rotationSteps = (rotationSteps + 1) % 4;
+    /**
+     * Turns the preview by a number of quarter turns. Positive is the same
+     * direction as the {@code R} key; negative comes from scrolling the other
+     * way, so the wheel can be used as a dial instead of only paging forward.
+     */
+    public static void rotate(int steps) {
+        if (!active() || steps == 0) {
+            return;
+        }
+        rotationSteps = Math.floorMod(rotationSteps + steps, 4);
         if (ghost != null) {
             ghost.rotate(rotationSteps);
         }
         clamp();
+        showRotation();
+    }
+
+    /** One quarter turn, as used by {@code R}. */
+    public static void rotate() {
+        rotate(1);
+    }
+
+    /** Action bar feedback, so the wheel does not rotate silently. */
+    private static void showRotation() {
+        Minecraft minecraft = Minecraft.getInstance();
+        if (minecraft.player == null) {
+            return;
+        }
+        minecraft.player.displayClientMessage(new TranslationTextComponent(
+                "buildcapture.preview.rotation", rotationSteps * 90), true);
     }
 
     public static void confirm() {

@@ -4,6 +4,7 @@ import com.tunwell.buildcapture.BuildCapture;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screen.IngameMenuScreen;
 import net.minecraft.client.gui.screen.Screen;
+import net.minecraft.util.Util;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 import net.minecraftforge.client.event.InputEvent;
@@ -13,14 +14,28 @@ import net.minecraftforge.fml.common.Mod;
 import org.lwjgl.glfw.GLFW;
 
 /**
- * Input for the placement ghost while no screen is open: scroll to move,
- * Ctrl+scroll for the vertical axis, arrows for single blocks, R to rotate,
- * right click (or Enter) to confirm, middle click or Escape to cancel.
+ * Input for the placement ghost while no screen is open: the wheel rotates the
+ * ghost (the same quarter turn as {@code R}), Shift+wheel moves it forward or
+ * back five blocks, Ctrl+wheel changes the height, the arrow keys move it one
+ * block, right click (or Enter) confirms and middle click or Escape cancels.
+ *
+ * <p>The wheel rotates because that is the thing you change while choosing a
+ * spot; position is set by where you stand and the arrow keys, and rotating by
+ * key only is hard to hit.</p>
  */
 @OnlyIn(Dist.CLIENT)
 @Mod.EventBusSubscriber(modid = BuildCapture.MOD_ID, value = Dist.CLIENT,
         bus = Mod.EventBusSubscriber.Bus.FORGE)
 public final class PlacementController {
+    /**
+     * Free-spinning wheels can send several scroll events per notch; without a
+     * floor the ghost would do a full turn from one flick of the finger. A
+     * quarter turn per 100 ms is still far faster than anyone needs.
+     */
+    private static final long ROTATE_COOLDOWN_MILLIS = 100L;
+
+    private static long lastRotateAt;
+
     private PlacementController() {
     }
 
@@ -47,11 +62,20 @@ public final class PlacementController {
         if (delta == 0.0D) {
             return;
         }
-        int step = (int) Math.signum(delta) * (Screen.hasShiftDown() ? 5 : 1);
+        int direction = (int) Math.signum(delta);
+        int step = direction * (Screen.hasShiftDown() ? 5 : 1);
         if (Screen.hasControlDown()) {
             PlacementPreview.move(0, step, 0);
-        } else {
+        } else if (Screen.hasShiftDown()) {
             PlacementPreview.moveForward(step);
+        } else {
+            // The wheel is the rotate dial: up is the R key's direction, down is
+            // the other way, one quarter turn per notch.
+            long now = Util.getMillis();
+            if (now - lastRotateAt >= ROTATE_COOLDOWN_MILLIS) {
+                lastRotateAt = now;
+                PlacementPreview.rotate(direction);
+            }
         }
         event.setCanceled(true);
     }

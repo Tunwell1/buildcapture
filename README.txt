@@ -97,10 +97,11 @@ weight, and has a search box.
   The structure is drawn as translucent block models inside a green footprint
   box; red means it does not fit inside the build height. Only the nearest
   surface is drawn, so the world behind the structure stays visible. Structures
-  over 150,000 blocks fall back to the box alone. Move it with the scroll wheel,
-  use `Ctrl`+scroll for the vertical axis, the arrow keys for single blocks and
-  `R` to rotate. Right-click (or Enter) places it, middle-click or Escape
-  cancels. Nothing is written until you confirm.
+  over 150,000 blocks fall back to the box alone. Rotate it with the scroll
+  wheel (or `R`), use `Ctrl`+scroll to change the height, `Shift`+scroll to move
+  it five blocks and the arrow keys for single blocks. Right-click (or Enter)
+  places it, middle-click or Escape cancels. Nothing is written until you
+  confirm.
 - **Import .nbt** opens the system file dialog and uploads the file to the
   server in chunks (the serverbound packet limit is 32 KiB). You can also drop
   one or more `.nbt` files onto the game window. The file is validated on the
