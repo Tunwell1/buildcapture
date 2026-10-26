@@ -63,6 +63,15 @@ Everything can be rebound under Controls, category "Build Capture".
 The three corner/save keys run exactly the same server code as the commands,
 so the checks and messages are identical; the chat window is never needed.
 
+While a placement preview is active the same Controls category also holds its
+own bindings: `R` turns the ghost, the arrow keys move it a block, `Page Up` /
+`Page Down` move it vertically, the face-edit key (`Left Alt`) turns it with the
+wheel and a separate `Wheel changes height` key (`Left Ctrl`) moves it up or
+down. A plain scroll moves the build five blocks. The wheel itself cannot be
+bound by Minecraft, so only the keys held with it are; the rest can be given
+combinations such as `Ctrl+R`. The on-screen hint prints whatever you have
+bound.
+
 Capturing
 ---------
 `/capture save` writes to the world's own datapack:
@@ -97,11 +106,10 @@ weight, and has a search box.
   The structure is drawn as translucent block models inside a green footprint
   box; red means it does not fit inside the build height. Only the nearest
   surface is drawn, so the world behind the structure stays visible. Structures
-  over 150,000 blocks fall back to the box alone. Rotate it with the scroll
-  wheel (or `R`), use `Ctrl`+scroll to change the height, `Shift`+scroll to move
-  it five blocks and the arrow keys for single blocks. Right-click (or Enter)
-  places it, middle-click or Escape cancels. Nothing is written until you
-  confirm.
+  over 150,000 blocks fall back to the box alone. A plain scroll moves it five
+  blocks, `Alt`+scroll turns it a quarter turn, `Ctrl`+scroll changes the height,
+  and the arrow keys move one block. Right-click (or Enter) places it,
+  middle-click or Escape cancels. Nothing is written until you confirm.
 - **Import .nbt** opens the system file dialog and uploads the file to the
   server in chunks (the serverbound packet limit is 32 KiB). You can also drop
   one or more `.nbt` files onto the game window. The file is validated on the
@@ -131,7 +139,8 @@ The box behaves like an object: grab it with the left mouse button and drag. It
 slides on the ground plane under the cursor, so it follows the mouse rather than
 the camera, and keeps its current height.
 
-- `Ctrl`+wheel moves it up or down, from any view direction.
+- `Ctrl`+wheel moves it up or down, from any view direction (the height modifier
+  is rebindable).
 - The arrow keys nudge it one block, `Page Up` / `Page Down` move it vertically.
 - Hold `Shift` for five-block steps.
 
@@ -206,7 +215,7 @@ Building from source
 gradlew.bat build
 ```
 
-The release jar is written to `build/libs/buildcapture-1.1.2.jar`. The build
+The release jar is written to `build/libs/buildcapture-1.1.5.jar`. The build
 targets Java 8; set `JAVA_HOME` to a JDK 17 for Gradle itself. A JDK 8 is
 detected automatically. If yours is not, put
 `org.gradle.java.installations.paths=<jdk8>,<jdk17>` in

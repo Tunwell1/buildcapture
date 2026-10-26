@@ -1,6 +1,29 @@
 Build Capture changelog
 =======================
 
+1.1.5
+-----
+
+Preview
+- The wheel mapping is reset to what the hand expects: a plain scroll moves the
+  build five blocks, as `Shift`+scroll did, and `Alt`+scroll turns it a quarter
+  turn per notch. `Ctrl`+scroll still changes the height. Free-spinning wheels
+  are throttled to one turn per 100 ms so a single flick cannot spin the build.
+- The wheel's turn modifier is the face-edit key, so `Alt` means "turn it" in
+  both the box and the preview, and the height modifier is its own binding
+  (`Wheel changes height`, `Ctrl` by default) that can be replaced under
+  Controls; `Ctrl+wheel` can become `Shift+wheel` or anything else.
+- The preview's own keys (`R` to turn, arrows and `Page Up`/`Page Down` to move)
+  are separate bindings too, and Enter places the preview through the save key.
+  Every preview control can be rebound, including key combinations such as
+  `Ctrl+R`.
+- The preview hint and the corner panel print the keys you actually have bound,
+  not hard-coded names.
+
+Selection
+- `Ctrl`+wheel is read through its binding as well, so the height modifier in
+  the corner panel follows the Controls screen instead of being fixed.
+
 1.1.4
 -----
 

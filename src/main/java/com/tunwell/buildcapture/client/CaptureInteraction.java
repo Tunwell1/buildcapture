@@ -174,8 +174,12 @@ public final class CaptureInteraction {
                 || minecraft.screen != null || swallowed) {
             return;
         }
-        // The ghost owns Enter and the arrow keys while it is on screen.
+        // The ghost owns the save key and the preview movement bindings while it
+        // is on screen; Enter places it instead of opening the save dialog.
         if (PlacementPreview.active()) {
+            if (save) {
+                PlacementPreview.confirm();
+            }
             return;
         }
         if (menu) {
@@ -289,7 +293,7 @@ public final class CaptureInteraction {
         }
         int step = (int) Math.signum(delta) * (Screen.hasShiftDown() ? 5 : 1);
         // Vertical has no face of its own, so it works from any view direction.
-        if (Screen.hasControlDown()) {
+        if (CaptureKeys.WHEEL_VERTICAL.isDown()) {
             translate(1, step);
             event.setCanceled(true);
             return;

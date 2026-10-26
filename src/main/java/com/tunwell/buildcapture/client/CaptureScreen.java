@@ -232,7 +232,9 @@ public final class CaptureScreen extends Screen {
         onClose();
         if (this.minecraft != null && this.minecraft.player != null) {
             this.minecraft.player.displayClientMessage(new TranslationTextComponent(
-                    "buildcapture.capture.preview_hint", entry.id().toString()), false);
+                    "buildcapture.capture.preview_hint", entry.id().toString(),
+                    CaptureKeys.FACE_EDIT.getTranslatedKeyMessage(),
+                    CaptureKeys.WHEEL_VERTICAL.getTranslatedKeyMessage()), false);
         }
     }
 

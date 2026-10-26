@@ -81,7 +81,8 @@ public final class CaptureHud {
             lines.add(new Line(action, ACTION));
         }
 
-        lines.add(new Line(new TranslationTextComponent("buildcapture.hud.scroll"), DIM));
+        lines.add(new Line(new TranslationTextComponent("buildcapture.hud.scroll",
+                key(CaptureKeys.WHEEL_VERTICAL)), DIM));
         lines.add(new Line(new TranslationTextComponent("buildcapture.hud.drag"), DIM));
         lines.add(new Line(new TranslationTextComponent("buildcapture.hud.hotkeys",
                 key(CaptureKeys.CORNER1), key(CaptureKeys.CORNER2),
