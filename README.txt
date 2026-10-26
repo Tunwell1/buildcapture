@@ -80,9 +80,10 @@ weight, and has a search box.
 
 - **Place** starts a placement preview instead of dropping the build at once.
   The structure is drawn as translucent block models inside a green footprint
-  box; red means it does not fit inside the build height. Structures over 50,000
-  blocks fall back to the box alone. Move it with the scroll wheel, use
-  `Ctrl`+scroll for the vertical axis, the arrow keys for single blocks and
+  box; red means it does not fit inside the build height. Only the nearest
+  surface is drawn, so the world behind the structure stays visible. Structures
+  over 150,000 blocks fall back to the box alone. Move it with the scroll wheel,
+  use `Ctrl`+scroll for the vertical axis, the arrow keys for single blocks and
   `R` to rotate. Right-click (or Enter) places it, middle-click or Escape
   cancels. Nothing is written until you confirm.
 - **Import .nbt** opens the system file dialog and uploads the file to the
@@ -158,7 +159,7 @@ Configuration
 | `capture.libraryDir` | `buildcapture_structures` | Shared library folder; an empty string disables it. |
 | `capture.clearAfterSave` | `true` | Drop the selection after a successful save. |
 | `capture.importMaxMb` | 16 | Largest `.nbt` file the browser accepts (1-64 MB). |
-| `capture.previewMaxBlocks` | 50 000 | Largest build drawn block by block in the preview (1 000-80 000); bigger builds show only the box. |
+| `capture.previewMaxBlocks` | 150 000 | Largest build drawn block by block in the preview (1 000-150 000); bigger builds show only the box. |
 | `capture.previewTranslucent` | `true` | Draw the ghost as translucent models; `false` makes it solid. The geometry is cached either way. |
 
 Multiplayer
@@ -167,8 +168,9 @@ The selection lives on the server, per player, and survives a relog. The
 commands work with only the server mod installed; the client mod adds the box,
 the face highlight, mouse editing, the structure browser and the placement
 preview. The ghost block list is sent by the server when the preview starts, so
-it also works on multiplayer servers. Players without the mod can join a server
-that has it and play normally - they just do not see the selection box.
+it also works on multiplayer servers. The client and the server must run the
+same mod version (they compare the network protocol on join); a vanilla client
+can still join and play, it just does not see the selection box or the ghost.
 
 Building from source
 --------------------
@@ -176,7 +178,7 @@ Building from source
 gradlew.bat build
 ```
 
-The release jar is written to `build/libs/buildcapture-1.1.1.jar`. The build
+The release jar is written to `build/libs/buildcapture-1.1.2.jar`. The build
 targets Java 8; set `JAVA_HOME` to a JDK 17 for Gradle itself. A JDK 8 is
 detected automatically. If yours is not, put
 `org.gradle.java.installations.paths=<jdk8>,<jdk17>` in

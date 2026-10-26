@@ -1,6 +1,23 @@
 Build Capture changelog
 =======================
 
+1.1.2
+-----
+
+Preview
+- The ghost is drawn as a single translucent skin now: a depth-only pass keeps
+  the nearest ghost surface, so the world behind the structure shows through
+  instead of the far side and the inside of the preview. It reads much more
+  like a hologram; solid previews (`capture.previewTranslucent = false`) are
+  unchanged.
+- The preview block limit is no longer a frame-rate limit. The default is
+  raised from 50,000 to 150,000 blocks, which is the practical ceiling for the
+  single packet the server sends the block list in. Lower
+  `capture.previewMaxBlocks` on weak clients; bigger builds still fall back to
+  the footprint box. Existing config files keep their old 50,000 value, so raise
+  it by hand (or delete the config) after updating.
+- Network protocol bumped to 5, so update the client and the server together.
+
 1.1.1
 -----
 

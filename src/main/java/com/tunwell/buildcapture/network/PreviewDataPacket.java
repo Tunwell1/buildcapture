@@ -18,9 +18,9 @@ import java.util.function.Supplier;
 public final class PreviewDataPacket {
     private static final int AXIS_BITS = 10;
     private static final int AXIS_MASK = (1 << AXIS_BITS) - 1;
-    /** Defensive limits for a client decoding a reply; the server caps far lower. */
+    /** Defensive limits for a client decoding a reply; they mirror the server caps. */
     private static final int MAX_PALETTE = 2_048;
-    private static final int MAX_BLOCKS = 80_000;
+    private static final int MAX_BLOCKS = 150_000;
 
     private final String id;
     private final int sizeX;

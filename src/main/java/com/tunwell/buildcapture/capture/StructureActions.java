@@ -37,11 +37,11 @@ public final class StructureActions {
     private static final double MAX_PLACE_DISTANCE = 256.0D;
 
     /**
-     * Hard upper bound on the blocks sent for a ghost. The config value is
-     * clamped to this so a modified config cannot exceed the 1 MiB clientbound
-     * payload limit.
+     * The block list is sent in a single packet, and the protocol rejects
+     * frames above 2 MiB, so 150,000 blocks with a large palette is the safe
+     * ceiling. Rendering is cached, so this is a transfer limit, not a speed one.
      */
-    private static final int MAX_GHOST_BLOCKS = 80_000;
+    private static final int MAX_GHOST_BLOCKS = 150_000;
     private static final int MAX_GHOST_PALETTE = 1_536;
     /** Positions are packed into 10 bits per axis in {@link PreviewDataPacket}. */
     private static final int MAX_GHOST_AXIS = 1_024;

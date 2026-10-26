@@ -35,9 +35,10 @@ public final class BuildCaptureConfig {
                 .defineInRange("importMaxMb", 16, 1, 64);
         CAPTURE_PREVIEW_MAX_BLOCKS = builder
                 .comment("Largest structure the placement preview draws block by block.",
-                        "Bigger structures fall back to the footprint box so the client stays responsive.",
-                        "Lower this on weak clients; the hard packet limit is 80000 blocks.")
-                .defineInRange("previewMaxBlocks", 50_000, 1_000, 80_000);
+                        "The block list travels in one packet, so the hard ceiling is 150000;",
+                        "the default is the ceiling because rendering is cached. Lower it on",
+                        "weak clients if a very large preview still stutters or runs out of memory.")
+                .defineInRange("previewMaxBlocks", 150_000, 1_000, 150_000);
         CAPTURE_PREVIEW_TRANSLUCENT = builder
                 .comment("Draw the placement preview as translucent block models.",
                         "Turn this off for a solid preview; the geometry cost is cached either way,",

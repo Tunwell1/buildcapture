@@ -75,7 +75,23 @@ final class GhostRenderer {
         matrixStack.translate(origin.getX(), origin.getY(), origin.getZ());
         mesh.bind();
         FORMAT.setupBufferState(0L);
+
+        if (alpha < OPAQUE_ALPHA) {
+            // Depth-only pass: keep the nearest ghost surface in the depth
+            // buffer, so the blended pass below paints one layer per pixel.
+            // Without it every face along the view ray shows through, and the
+            // player sees the far side of the structure instead of the world
+            // behind it.
+            RenderSystem.colorMask(false, false, false, false);
+            RenderSystem.depthMask(true);
+            RenderSystem.depthFunc(GL11.GL_LEQUAL);
+            mesh.draw(matrixStack.last().pose(), GL11.GL_QUADS);
+            RenderSystem.colorMask(true, true, true, true);
+        }
+
+        RenderSystem.depthMask(false);
         mesh.draw(matrixStack.last().pose(), GL11.GL_QUADS);
+
         VertexBuffer.unbind();
         FORMAT.clearBufferState();
         matrixStack.popPose();
