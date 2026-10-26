@@ -61,6 +61,7 @@
   "buildcapture.capture.gui.unreadable": "unreadable file",
   "buildcapture.capture.gui.uploading": "Uploading %s: %s%%",
   "buildcapture.capture.preview_hint": "Preview of %s: scroll to move, Ctrl+scroll for up/down, arrows for one block, R to rotate, right-click to place, Esc to cancel.",
+  "buildcapture.preview.limited": "This structure is too large or too complex to show block by block (%s blocks); showing only the box.",
   "buildcapture.capture.import_dialog": "Choose a structure file",
   "buildcapture.capture.import_done": "Imported %s (%sx%sx%s). It is available immediately; /capture reload enables it for structure blocks.",
   "buildcapture.capture.import_newer": "This file was saved by a newer Minecraft (DataVersion %s), so some blocks may be missing.",

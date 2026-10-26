@@ -9,12 +9,14 @@ Browser
   `/capture gui`. It lists every capture from the world datapack and the shared
   library with its dimensions and file size, has a search box, and marks
   world-only, library-only and mirrored entries with a coloured dot.
-- Place from the browser now starts a placement preview: the structure is
-  outlined as a green box at the target spot (red when it does not fit the build
-  height). Move it with the scroll wheel, `Ctrl`+scroll for the vertical axis,
-  arrow keys for single blocks, `R` to rotate; right-click or Enter places it,
-  middle-click or Escape cancels. Nothing is written until you confirm, and the
-  server re-validates the id, the distance and the build height.
+- Place from the browser now starts a placement preview: the structure is shown
+  as translucent block models at the target spot, with a green footprint box
+  (red when it does not fit the build height). Structures above 12,000 blocks or
+  1,024 palette entries fall back to the box alone so the preview stays cheap.
+  Move it with the scroll wheel, `Ctrl`+scroll for the vertical axis, arrow keys
+  for single blocks, `R` to rotate; right-click or Enter places it, middle-click
+  or Escape cancels. Nothing is written until you confirm, and the server
+  re-validates the id, the distance and the build height.
 - Import .nbt files without leaving the game: the file dialog or a drag-and-drop
   onto the window. The client uploads the file in 22 KB chunks, and the server
   validates the structure (gzip NBT, `size`, `palette`, `blocks`, per-side limit)
@@ -33,11 +35,14 @@ Fixes
   no longer stays on screen. Controlled by `capture.clearAfterSave`.
 - Placing from the browser is no longer limited to the block in front of the
   player: the preview can be moved and confirmed anywhere within 256 blocks.
+- Rotated placements now start at the previewed corner. The rotation offset that
+  vanilla structure blocks apply was missing, so 90/180/270 degree placements
+  could land beside the ghost instead of under it.
 
 Config
 - New option `capture.clearAfterSave` (default true).
 - New option `capture.importMaxMb` (default 16, 1-64).
-- Network protocol bumped to 3; the client and the server must both run 1.1.0.
+- Network protocol bumped to 4; the client and the server must both run 1.1.0.
 
 1.0.0 - first public release
 ----------------------------

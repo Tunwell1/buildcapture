@@ -87,12 +87,13 @@ Press `C` or run `/capture gui`. The screen lists every capture from the world
 datapack and the shared library with its dimensions and file size, has a search
 box, and marks world-only, library-only and mirrored entries with a coloured dot.
 
-**Place** does not drop the build immediately: the structure is outlined as a
-green box at the target spot (red when it does not fit the build height). Move
-it with the scroll wheel, use `Ctrl`+scroll for the vertical axis, the arrow keys
-for single blocks and `R` to rotate. Right-click (or Enter) places it;
-middle-click or Escape cancels. Nothing is written until you confirm, and the
-server re-checks the id, distance and build height.
+**Place** does not drop the build immediately: the structure is shown as
+translucent block models inside a green footprint box at the target spot (red
+when it does not fit the build height). Structures over 12,000 blocks fall back
+to the box alone. Move it with the scroll wheel, use `Ctrl`+scroll for the
+vertical axis, the arrow keys for single blocks and `R` to rotate. Right-click
+(or Enter) places it; middle-click or Escape cancels. Nothing is written until
+you confirm, and the server re-checks the id, distance and build height.
 
 **Import .nbt** opens the system file dialog. You can also drop one or more
 `.nbt` files onto the game window. The client uploads the file to the server in
@@ -157,10 +158,11 @@ together.
 The selection lives on the server, per player, and survives relogging. The
 commands work with only the server mod installed; the client mod adds the
 outline, the face highlight, mouse editing, the browser and the placement
-preview. Imports are uploaded to the server and checked there, so they work on
-multiplayer servers — the client never writes files directly. Players without
-the mod can join a server that has it and play normally — they just do not see
-the box or the browser.
+preview. The ghost block list is sent by the server when the preview starts, so
+it also works on multiplayer servers. Imports are uploaded to the server and
+checked there, so they work on multiplayer servers — the client never writes
+files directly. Players without the mod can join a server that has it and play
+normally — they just do not see the box or the browser.
 
 ### Compatibility and limits
 

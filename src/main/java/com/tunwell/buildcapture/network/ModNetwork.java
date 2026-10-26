@@ -6,7 +6,7 @@ import net.minecraftforge.fml.network.NetworkRegistry;
 import net.minecraftforge.fml.network.simple.SimpleChannel;
 
 public final class ModNetwork {
-    private static final String PROTOCOL = "3";
+    private static final String PROTOCOL = "4";
 
     // The capture commands run on the server, so the channel must also accept
     // vanilla clients: they cannot render the box, but they can play and use
@@ -81,6 +81,20 @@ public final class ModNetwork {
                 OpenGuiPacket::encode,
                 OpenGuiPacket::decode,
                 OpenGuiPacket::handle
+        );
+        CHANNEL.registerMessage(
+                8,
+                PreviewRequestPacket.class,
+                PreviewRequestPacket::encode,
+                PreviewRequestPacket::decode,
+                PreviewRequestPacket::handle
+        );
+        CHANNEL.registerMessage(
+                9,
+                PreviewDataPacket.class,
+                PreviewDataPacket::encode,
+                PreviewDataPacket::decode,
+                PreviewDataPacket::handle
         );
     }
 }

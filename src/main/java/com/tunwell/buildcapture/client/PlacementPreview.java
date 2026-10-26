@@ -2,10 +2,13 @@ package com.tunwell.buildcapture.client;
 
 import com.tunwell.buildcapture.capture.StructureCatalog;
 import com.tunwell.buildcapture.network.ModNetwork;
+import com.tunwell.buildcapture.network.PreviewRequestPacket;
 import com.tunwell.buildcapture.network.StructureActionPacket;
+import net.minecraft.block.BlockState;
 import net.minecraft.client.Minecraft;
 import net.minecraft.util.Direction;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.text.TranslationTextComponent;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 
@@ -13,8 +16,9 @@ import javax.annotation.Nullable;
 
 /**
  * "Ghost" placement: the structure is not placed until the player confirms, so
- * the exact spot can be adjusted first. The ghost is drawn as a box of the
- * structure's footprint; the server still validates the position and the id.
+ * the exact spot can be adjusted first. The server sends the block list once
+ * the preview starts, and the client draws it as translucent block models; the
+ * server still validates the position and the id.
  */
 @OnlyIn(Dist.CLIENT)
 public final class PlacementPreview {
@@ -22,6 +26,8 @@ public final class PlacementPreview {
     private static String id;
     @Nullable
     private static BlockPos origin;
+    @Nullable
+    private static GhostStructure ghost;
     private static int sizeX;
     private static int sizeY;
     private static int sizeZ;
@@ -48,6 +54,12 @@ public final class PlacementPreview {
         return rotationSteps;
     }
 
+    /** Block list from the server, or {@code null} while loading or when it is too large. */
+    @Nullable
+    public static GhostStructure ghost() {
+        return ghost;
+    }
+
     /** Footprint after rotation, as {x, y, z}. */
     public static int[] size() {
         if (rotationSteps % 2 == 0) {
@@ -63,12 +75,14 @@ public final class PlacementPreview {
         }
         BlockPos size = entry.size();
         id = entry.id().toString();
+        ghost = null;
         sizeX = Math.max(1, size.getX());
         sizeY = Math.max(1, size.getY());
         sizeZ = Math.max(1, size.getZ());
         rotationSteps = Math.floorMod(rotation, 4);
         origin = defaultOrigin(minecraft);
         clamp();
+        ModNetwork.CHANNEL.sendToServer(new PreviewRequestPacket(id));
     }
 
     /** One block in front of the player, sitting on the block they stand on. */
@@ -119,6 +133,9 @@ public final class PlacementPreview {
 
     public static void rotate() {
         rotationSteps = (rotationSteps + 1) % 4;
+        if (ghost != null) {
+            ghost.rotate(rotationSteps);
+        }
         clamp();
     }
 
@@ -134,7 +151,44 @@ public final class PlacementPreview {
     public static void stop() {
         id = null;
         origin = null;
+        ghost = null;
         rotationSteps = 0;
+    }
+
+    /**
+     * Called from the network thread's scheduled client task. A reply for an id
+     * that is no longer being previewed is ignored, which also covers a fast
+     * switch from one structure to another.
+     */
+    public static void setGhost(String ghostId, int sizeX, int sizeY, int sizeZ, int total,
+                                boolean limited, BlockState[] palette, int[] positions,
+                                int[] indexes) {
+        if (id == null || !id.equals(ghostId)) {
+            return;
+        }
+        if (limited) {
+            ghost = null;
+            showLimited(total);
+            return;
+        }
+        if (positions.length == 0 || palette.length == 0
+                || positions.length != indexes.length) {
+            ghost = null;
+            return;
+        }
+        ghost = new GhostStructure(ghostId, sizeX, sizeY, sizeZ, total,
+                palette, positions, indexes);
+        ghost.rotate(rotationSteps);
+    }
+
+    private static void showLimited(int total) {
+        Minecraft minecraft = Minecraft.getInstance();
+        if (minecraft.player == null) {
+            return;
+        }
+        String count = total > 0 ? Integer.toString(total) : "?";
+        minecraft.player.displayClientMessage(new TranslationTextComponent(
+                "buildcapture.preview.limited", count), false);
     }
 
     /** True when the footprint would leave the build height. */

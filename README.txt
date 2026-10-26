@@ -79,8 +79,9 @@ every capture from the world and the shared library, with its size and file
 weight, and has a search box.
 
 - **Place** starts a placement preview instead of dropping the build at once.
-  The structure is drawn as a green box at the target spot; red means it does
-  not fit inside the build height. Move it with the scroll wheel, use
+  The structure is drawn as translucent block models inside a green footprint
+  box; red means it does not fit inside the build height. Structures over 12,000
+  blocks fall back to the box alone. Move it with the scroll wheel, use
   `Ctrl`+scroll for the vertical axis, the arrow keys for single blocks and
   `R` to rotate. Right-click (or Enter) places it, middle-click or Escape
   cancels. Nothing is written until you confirm.
@@ -163,8 +164,9 @@ Multiplayer
 The selection lives on the server, per player, and survives a relog. The
 commands work with only the server mod installed; the client mod adds the box,
 the face highlight, mouse editing, the structure browser and the placement
-preview. Players without the mod can join a server that has it and play
-normally - they just do not see the selection box.
+preview. The ghost block list is sent by the server when the preview starts, so
+it also works on multiplayer servers. Players without the mod can join a server
+that has it and play normally - they just do not see the selection box.
 
 Building from source
 --------------------

@@ -61,6 +61,7 @@
   "buildcapture.capture.gui.unreadable": "файл не читается",
   "buildcapture.capture.gui.uploading": "Загрузка %s: %s%%",
   "buildcapture.capture.preview_hint": "Предпросмотр %s: колесо — двигать, Ctrl+колесо — вверх/вниз, стрелки — на блок, R — поворот, ПКМ — поставить, Esc — отмена.",
+  "buildcapture.preview.limited": "Структура слишком большая или сложная для показа блоками (%s блоков); показана только рамка.",
   "buildcapture.capture.import_dialog": "Выберите файл структуры",
   "buildcapture.capture.import_done": "Импортировано %s (%sx%sx%s). Доступно сразу; /capture reload включит его для структурных блоков.",
   "buildcapture.capture.import_newer": "Файл сохранён более новой версией Minecraft (DataVersion %s), часть блоков может пропасть.",
