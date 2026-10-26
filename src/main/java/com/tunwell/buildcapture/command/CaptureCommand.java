@@ -4,6 +4,7 @@ import com.tunwell.buildcapture.BuildCapture;
 import com.tunwell.buildcapture.capture.CaptureBackups;
 import com.tunwell.buildcapture.capture.CaptureExporter;
 import com.tunwell.buildcapture.capture.CaptureSelection;
+import com.tunwell.buildcapture.capture.CaptureUndo;
 import com.tunwell.buildcapture.capture.StructureLibrary;
 import com.tunwell.buildcapture.config.BuildCaptureConfig;
 import com.tunwell.buildcapture.network.CaptureBoxPacket;
@@ -465,58 +466,23 @@ public final class CaptureCommand {
 
     private static int undo(CommandSource source) throws CommandSyntaxException {
         ServerPlayerEntity player = source.getPlayerOrException();
-        CaptureSelection.Last last = CaptureSelection.last(player);
-        if (last == null) {
+        CaptureUndo.Result result = CaptureUndo.undo(player);
+        if (result.status() == CaptureUndo.Status.NOTHING) {
             source.sendFailure(new TranslationTextComponent(
                     "buildcapture.capture.nothing_to_undo"));
             return 0;
         }
-
-        ResourceLocation id = ResourceLocation.tryParse(last.id());
-        if (id == null) {
-            CaptureSelection.forget(player);
+        if (result.status() == CaptureUndo.Status.FAILED) {
             source.sendFailure(new TranslationTextComponent(
-                    "buildcapture.capture.undo_failed", last.id()));
+                    "buildcapture.capture.undo_failed", result.id()));
             return 0;
         }
-
-        Path backup = last.backup();
-        boolean restored;
-        if (backup != null && Files.exists(backup)) {
-            if (!CaptureBackups.restore(last.file(), backup)) {
-                source.sendFailure(new TranslationTextComponent(
-                        "buildcapture.capture.undo_failed", id.toString()));
-                return 0;
-            }
-            restoreCache(source.getServer(), id, backup);
-            restored = true;
-        } else {
-            CaptureBackups.delete(last.file());
-            TemplateExport.forget(source.getServer(), id);
-            restored = false;
-        }
-
-        undoLibrary(last);
-        CaptureSelection.forget(player);
+        boolean restored = result.status() == CaptureUndo.Status.RESTORED;
         source.sendSuccess(new TranslationTextComponent(
                 restored ? "buildcapture.capture.undo_restored"
                         : "buildcapture.capture.undo_removed",
-                id.toString()), false);
+                result.id()), false);
         return 1;
-    }
-
-    /** Restores the library copy to the same state it had before the capture. */
-    private static void undoLibrary(CaptureSelection.Last last) {
-        Path libraryFile = last.libraryFile();
-        if (libraryFile == null) {
-            return;
-        }
-        Path libraryBackup = last.libraryBackup();
-        if (libraryBackup != null && Files.exists(libraryBackup)) {
-            CaptureBackups.restore(libraryFile, libraryBackup);
-        } else {
-            CaptureBackups.delete(libraryFile);
-        }
     }
 
     private static int clear(CommandSource source) throws CommandSyntaxException {
@@ -578,15 +544,6 @@ public final class CaptureCommand {
         source.sendSuccess(new TranslationTextComponent(
                 "buildcapture.capture.reloaded", packId), false);
         return 1;
-    }
-
-    private static void restoreCache(MinecraftServer server, ResourceLocation id, Path backup) {
-        try (InputStream input = Files.newInputStream(backup)) {
-            CompoundNBT nbt = CompressedStreamTools.readCompressed(input);
-            TemplateExport.updateCache(server, id, nbt);
-        } catch (Exception exception) {
-            BuildCapture.LOGGER.warn("Failed to refresh the cached template {}", id, exception);
-        }
     }
 
     @Nullable

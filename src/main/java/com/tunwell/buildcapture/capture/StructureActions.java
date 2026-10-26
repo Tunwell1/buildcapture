@@ -37,7 +37,8 @@ public final class StructureActions {
         Path root = StructureLibrary.root();
         String libraryPath = root == null ? "" : root.toAbsolutePath().toString();
         ModNetwork.CHANNEL.send(PacketDistributor.PLAYER.with(() -> player),
-                new StructureListPacket(entries, libraryPath));
+                new StructureListPacket(entries, libraryPath,
+                        CaptureSelection.last(player) != null));
     }
 
     public static void place(ServerPlayerEntity player, @Nullable ResourceLocation id,
@@ -83,14 +84,16 @@ public final class StructureActions {
         boolean removed = false;
 
         Path worldFile = CaptureExporter.datapackPath(player.getServer(), id);
+        Path worldBackup = null;
         if (worldFile.toFile().exists()) {
-            CaptureBackups.backup(player.getServer(), id, worldFile);
+            worldBackup = CaptureBackups.backup(player.getServer(), id, worldFile);
             removed |= CaptureBackups.delete(worldFile);
         }
 
         Path libraryFile = StructureLibrary.path(id);
+        Path libraryBackup = null;
         if (libraryFile != null && libraryFile.toFile().exists()) {
-            CaptureBackups.backup(player.getServer(), id, libraryFile, "library");
+            libraryBackup = CaptureBackups.backup(player.getServer(), id, libraryFile, "library");
             removed |= CaptureBackups.delete(libraryFile);
         }
 
@@ -99,8 +102,32 @@ public final class StructureActions {
             return;
         }
         TemplateExport.forget(player.getServer(), id);
+        CaptureSelection.remember(player, id, worldFile, worldBackup, libraryFile, libraryBackup);
         player.sendMessage(new TranslationTextComponent(
                 "buildcapture.capture.deleted", id.toString()), Util.NIL_UUID);
+        sendList(player);
+    }
+
+    /** Reverts the player's last export, then refreshes the browser. */
+    public static void undo(ServerPlayerEntity player) {
+        CaptureUndo.Result result = CaptureUndo.undo(player);
+        switch (result.status()) {
+            case NOTHING:
+                fail(player, "buildcapture.capture.nothing_to_undo");
+                return;
+            case FAILED:
+                fail(player, "buildcapture.capture.undo_failed", result.id());
+                return;
+            case RESTORED:
+                player.sendMessage(new TranslationTextComponent(
+                        "buildcapture.capture.undo_restored", result.id()), Util.NIL_UUID);
+                break;
+            case REMOVED:
+            default:
+                player.sendMessage(new TranslationTextComponent(
+                        "buildcapture.capture.undo_removed", result.id()), Util.NIL_UUID);
+                break;
+        }
         sendList(player);
     }
 

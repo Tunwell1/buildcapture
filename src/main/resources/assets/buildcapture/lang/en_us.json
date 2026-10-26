@@ -51,6 +51,7 @@
   "buildcapture.capture.gui.delete_confirm": "Confirm",
   "buildcapture.capture.gui.delete_wait": "Press Delete again to remove %s.",
   "buildcapture.capture.gui.folder": "Open library folder",
+  "buildcapture.capture.gui.undo": "Undo",
   "buildcapture.capture.gui.close": "Close",
   "buildcapture.capture.gui.empty": "Nothing found. Capture something with /capture save or import an .nbt file.",
   "buildcapture.capture.gui.hint": "Click to select, double-click to preview placement.",

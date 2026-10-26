@@ -103,8 +103,11 @@ if that name is taken. Files saved by a newer Minecraft are accepted with a
 DataVersion warning. Only operators can import.
 
 **Delete** removes the entry from both places, keeping a backup, and asks for a
-second click first. **Open library folder** opens `buildcapture_structures` in
-the file manager — only meaningful when the server runs on your own machine.
+second click first. **Undo** reverts your last operation — a save goes back to
+the version it replaced, an import is removed, a delete is restored — and is
+disabled when there is nothing to revert. **Open library folder** opens
+`buildcapture_structures` in the file manager — only meaningful when the server
+runs on your own machine.
 
 ### Library, backups and undo
 
@@ -116,9 +119,10 @@ every world, which makes it a practical place to keep a personal kit of parts.
 back to the library when the world copy does not exist.
 
 Overwriting an existing structure never destroys it: up to 20 previous versions
-are kept under `world/buildcapture_backups/`, and `/capture undo` restores the
-world and library copies changed by your last capture (or deletes them if the
-capture was new).
+are kept under `world/buildcapture_backups/`, and `/capture undo` reverts your
+last file operation: a save is restored to its previous version, an import is
+removed, a delete is restored. The world and library copies are handled
+together.
 
 ### Commands
 
@@ -134,7 +138,7 @@ capture was new).
 | `/capture place <name> [90\|180\|270]` | Place a captured structure in front of you. |
 | `/capture gui` | Open the structure browser (same as the `C` key). |
 | `/capture list` | List captures from the world and the library. |
-| `/capture undo` | Restore or delete your last capture. |
+| `/capture undo` | Revert your last save, import or delete. |
 | `/capture status` | Show both corners, the box size and the library folder. |
 | `/capture clear` | Drop the selection. |
 | `/capture reload` | Rescan and enable the capture datapack. |
@@ -166,7 +170,8 @@ the box or the browser.
 - Imported files are limited to 512 blocks per side and `capture.importMaxMb`.
 - A capture containing a structure block is refused, to avoid recursive
   structure placement.
-- `/capture undo` only covers the last capture of the player who ran it.
+- `/capture undo` only covers the last save, import or delete of the player who
+  ran it.
 
 ### License
 

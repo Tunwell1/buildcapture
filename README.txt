@@ -37,7 +37,7 @@ Commands
 | `/capture place <name> [90\|180\|270]` | Place a capture in front of you. |
 | `/capture gui` | Open the structure browser (same as the `C` key). |
 | `/capture list` | List captures from the world and the shared library. |
-| `/capture undo` | Restore or delete your last capture. |
+| `/capture undo` | Revert your last save, import or delete. |
 | `/capture status` | Show both corners, the box size and the library folder. |
 | `/capture clear` | Drop the selection. |
 | `/capture reload` | Rescan and enable the capture datapack. |
@@ -92,6 +92,10 @@ weight, and has a search box.
   if the name is taken). Only operators can import.
 - **Delete** removes the entry from the library and the world datapack, keeping
   a backup. It asks for a second click first.
+- **Undo** reverts your last operation: a save goes back to the version it
+  replaced, an import is removed, and a delete is restored from its backup. It
+  is the same operation as `/capture undo` and is greyed out when there is
+  nothing to revert.
 - **Open library folder** opens `buildcapture_structures` in the file manager.
   It only works when the server runs on your own machine.
 
@@ -138,10 +142,10 @@ Before a capture overwrites an existing structure, the old file is copied to:
 <world>/buildcapture_backups/<world|library>/<namespace>/<path>/
 ```
 
-The newest 20 backups per structure are kept. `/capture undo` restores the
-world copy and the library copy changed by your last capture; if the capture was
-new, it deletes them instead. The undo history covers the last capture of the
-player who ran the command.
+The newest 20 backups per structure are kept. `/capture undo` reverts the last
+file operation of the player who ran it: a save goes back to the version it
+replaced (or is deleted when it was new), an import is removed, and a delete is
+restored. The world and library copies are handled together.
 
 Configuration
 -------------
@@ -168,9 +172,11 @@ Building from source
 gradlew.bat build
 ```
 
-The release jar is written to `build/libs/buildcapture-1.0.0.jar`. The build
-targets Java 8; set `JAVA_HOME` to a JDK 17 for Gradle itself. The toolchain
-paths can be adjusted in `gradle.properties`.
+The release jar is written to `build/libs/buildcapture-1.1.0.jar`. The build
+targets Java 8; set `JAVA_HOME` to a JDK 17 for Gradle itself. A JDK 8 is
+detected automatically. If yours is not, put
+`org.gradle.java.installations.paths=<jdk8>,<jdk17>` in
+`~/.gradle/gradle.properties` instead of editing the project's file.
 
 Credits and license
 -------------------

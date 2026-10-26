@@ -51,6 +51,7 @@
   "buildcapture.capture.gui.delete_confirm": "Точно?",
   "buildcapture.capture.gui.delete_wait": "Нажми «Удалить» ещё раз, чтобы удалить %s.",
   "buildcapture.capture.gui.folder": "Открыть папку",
+  "buildcapture.capture.gui.undo": "Откат",
   "buildcapture.capture.gui.close": "Закрыть",
   "buildcapture.capture.gui.empty": "Пусто. Сохрани постройку через /capture save или импортируй .nbt.",
   "buildcapture.capture.gui.hint": "Клик — выбрать, двойной клик — предпросмотр установки.",

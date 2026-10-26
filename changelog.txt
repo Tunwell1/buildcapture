@@ -22,6 +22,9 @@ Browser
   id. A file saved by a newer Minecraft is accepted with a DataVersion warning.
 - Delete entries from the browser with a confirmation click; a backup of every
   deleted file is kept.
+- Undo button in the browser: reverts your last operation (save, import or
+  delete), the same as `/capture undo`, and greys out when there is nothing to
+  revert.
 - "Open library folder" button for the shared library (client and server on the
   same machine).
 
@@ -34,7 +37,7 @@ Fixes
 Config
 - New option `capture.clearAfterSave` (default true).
 - New option `capture.importMaxMb` (default 16, 1-64).
-- Network protocol bumped to 2; the client and the server must both run 1.1.0.
+- Network protocol bumped to 3; the client and the server must both run 1.1.0.
 
 1.0.0 - first public release
 ----------------------------

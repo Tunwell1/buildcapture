@@ -16,10 +16,13 @@ import java.util.function.Supplier;
 public final class StructureListPacket {
     private final List<StructureCatalog.Entry> entries;
     private final String libraryPath;
+    private final boolean canUndo;
 
-    public StructureListPacket(List<StructureCatalog.Entry> entries, String libraryPath) {
+    public StructureListPacket(List<StructureCatalog.Entry> entries, String libraryPath,
+                               boolean canUndo) {
         this.entries = entries;
         this.libraryPath = libraryPath;
+        this.canUndo = canUndo;
     }
 
     public static void encode(StructureListPacket message, PacketBuffer buffer) {
@@ -34,6 +37,7 @@ public final class StructureListPacket {
             buffer.writeVarInt((int) Math.min(Integer.MAX_VALUE, entry.bytes()));
         }
         buffer.writeUtf(message.libraryPath, 512);
+        buffer.writeBoolean(message.canUndo);
     }
 
     public static StructureListPacket decode(PacketBuffer buffer) {
@@ -52,14 +56,16 @@ public final class StructureListPacket {
                         new BlockPos(x, y, z), bytes));
             }
         }
-        return new StructureListPacket(entries, buffer.readUtf(512));
+        String libraryPath = buffer.readUtf(512);
+        boolean canUndo = buffer.readBoolean();
+        return new StructureListPacket(entries, libraryPath, canUndo);
     }
 
     public void handle(Supplier<NetworkEvent.Context> supplier) {
         NetworkEvent.Context context = supplier.get();
         context.enqueueWork(() -> DistExecutor.unsafeRunWhenOn(Dist.CLIENT,
                 () -> () -> com.tunwell.buildcapture.client.ClientStructureList
-                        .set(this.entries, this.libraryPath)));
+                        .set(this.entries, this.libraryPath, this.canUndo)));
         context.setPacketHandled(true);
     }
 }

@@ -16,14 +16,16 @@ import java.util.List;
 public final class ClientStructureList {
     private static List<StructureCatalog.Entry> entries = Collections.emptyList();
     private static String libraryPath = "";
+    private static boolean canUndo;
     private static int version;
 
     private ClientStructureList() {
     }
 
-    public static void set(List<StructureCatalog.Entry> list, String path) {
+    public static void set(List<StructureCatalog.Entry> list, String path, boolean undo) {
         entries = Collections.unmodifiableList(list);
         libraryPath = path == null ? "" : path;
+        canUndo = undo;
         version++;
     }
 
@@ -33,6 +35,11 @@ public final class ClientStructureList {
 
     public static String libraryPath() {
         return libraryPath;
+    }
+
+    /** True when the server has a capture of this player that can be reverted. */
+    public static boolean canUndo() {
+        return canUndo;
     }
 
     /** Bumped on every server reply, so the screen knows when to rebuild. */

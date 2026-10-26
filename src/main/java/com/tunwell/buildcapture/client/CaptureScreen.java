@@ -53,6 +53,7 @@ public final class CaptureScreen extends Screen {
     private Button importButton;
     private Button deleteButton;
     private Button folderButton;
+    private Button undoButton;
 
     private int left;
     private int top;
@@ -134,11 +135,15 @@ public final class CaptureScreen extends Screen {
                 buttonWidth, 18, new TranslationTextComponent("buildcapture.capture.gui.delete"),
                 button -> deleteSelected()));
 
-        int folderWidth = 120;
+        int folderWidth = 110;
+        int undoWidth = 70;
         int closeWidth = 64;
         folderButton = addButton(new Button(left + 8, bottom2, folderWidth, 18,
                 new TranslationTextComponent("buildcapture.capture.gui.folder"),
                 button -> openFolder()));
+        undoButton = addButton(new Button(left + 8 + folderWidth + 4, bottom2, undoWidth, 18,
+                new TranslationTextComponent("buildcapture.capture.gui.undo"),
+                button -> ModNetwork.CHANNEL.sendToServer(StructureActionPacket.undo())));
         addButton(new Button(left + 8 + inner - closeWidth, bottom2, closeWidth, 18,
                 new TranslationTextComponent("buildcapture.capture.gui.close"),
                 button -> onClose()));
@@ -165,6 +170,7 @@ public final class CaptureScreen extends Screen {
         StructureCatalog.Entry entry = selected();
         placeButton.active = entry != null && entry.size().getX() > 0;
         deleteButton.active = entry != null;
+        undoButton.active = ClientStructureList.canUndo();
         folderButton.active = !ClientStructureList.libraryPath().isEmpty()
                 && Files.isDirectory(Paths.get(ClientStructureList.libraryPath()));
     }

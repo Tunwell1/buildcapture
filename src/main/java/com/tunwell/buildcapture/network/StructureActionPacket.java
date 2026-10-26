@@ -12,12 +12,13 @@ import net.minecraftforge.fml.network.NetworkEvent;
 import javax.annotation.Nullable;
 import java.util.function.Supplier;
 
-/** One click in the structure browser: refresh, place or delete. */
+/** One click in the structure browser: refresh, place, delete or undo. */
 public final class StructureActionPacket {
     public enum Action {
         LIST,
         PLACE,
-        DELETE
+        DELETE,
+        UNDO
     }
 
     private final Action action;
@@ -43,6 +44,10 @@ public final class StructureActionPacket {
 
     public static StructureActionPacket delete(String id) {
         return new StructureActionPacket(Action.DELETE, id, 0, BlockPos.ZERO);
+    }
+
+    public static StructureActionPacket undo() {
+        return new StructureActionPacket(Action.UNDO, null, 0, BlockPos.ZERO);
     }
 
     public static void encode(StructureActionPacket message, PacketBuffer buffer) {
@@ -83,6 +88,9 @@ public final class StructureActionPacket {
                     break;
                 case DELETE:
                     StructureActions.delete(player, parsed);
+                    break;
+                case UNDO:
+                    StructureActions.undo(player);
                     break;
                 default:
                     break;

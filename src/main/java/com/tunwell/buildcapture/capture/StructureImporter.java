@@ -124,6 +124,7 @@ public final class StructureImporter {
         TemplateExport.updateCache(server, id, nbt);
 
         Path libraryFile = StructureLibrary.write(id, nbt);
+        CaptureSelection.remember(player, id, worldFile, null, libraryFile, null);
         player.sendMessage(new TranslationTextComponent(
                 "buildcapture.capture.import_done", id.toString(), x, y, z), Util.NIL_UUID);
         if (libraryFile != null) {
