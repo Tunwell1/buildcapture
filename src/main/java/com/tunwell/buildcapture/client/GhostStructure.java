@@ -29,6 +29,8 @@ public final class GhostStructure {
     private final int[] baseIndexes;
 
     private int rotationSteps;
+    /** Bumped on every rotation so the client can drop its cached mesh. */
+    private int revision;
     private int sizeX;
     private int sizeY;
     private int sizeZ;
@@ -87,6 +89,11 @@ public final class GhostStructure {
         return positions[index];
     }
 
+    /** Changes whenever the rotated block list is rebuilt. */
+    public int revision() {
+        return revision;
+    }
+
     /**
      * False for a block that is completely enclosed by opaque ghost blocks.
      * Skipping those keeps solid builds cheap without changing what is drawn.
@@ -105,6 +112,7 @@ public final class GhostStructure {
     }
 
     private void rebuild() {
+        revision++;
         Rotation rotation = rotation(rotationSteps);
         sizeX = rotationSteps % 2 == 0 ? baseSizeX : baseSizeZ;
         sizeY = baseSizeY;

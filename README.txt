@@ -159,6 +159,7 @@ Configuration
 | `capture.clearAfterSave` | `true` | Drop the selection after a successful save. |
 | `capture.importMaxMb` | 16 | Largest `.nbt` file the browser accepts (1-64 MB). |
 | `capture.previewMaxBlocks` | 50 000 | Largest build drawn block by block in the preview (1 000-80 000); bigger builds show only the box. |
+| `capture.previewTranslucent` | `true` | Draw the ghost as translucent models; `false` makes it solid. The geometry is cached either way. |
 
 Multiplayer
 -----------
@@ -175,7 +176,7 @@ Building from source
 gradlew.bat build
 ```
 
-The release jar is written to `build/libs/buildcapture-1.1.0.jar`. The build
+The release jar is written to `build/libs/buildcapture-1.1.1.jar`. The build
 targets Java 8; set `JAVA_HOME` to a JDK 17 for Gradle itself. A JDK 8 is
 detected automatically. If yours is not, put
 `org.gradle.java.installations.paths=<jdk8>,<jdk17>` in

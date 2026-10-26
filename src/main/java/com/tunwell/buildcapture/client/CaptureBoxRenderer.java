@@ -3,12 +3,9 @@ package com.tunwell.buildcapture.client;
 import com.tunwell.buildcapture.BuildCapture;
 import com.mojang.blaze3d.matrix.MatrixStack;
 import com.mojang.blaze3d.systems.RenderSystem;
-import net.minecraft.block.BlockState;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.renderer.BlockRendererDispatcher;
 import net.minecraft.client.renderer.BufferBuilder;
 import net.minecraft.client.renderer.Tessellator;
-import net.minecraft.client.renderer.texture.AtlasTexture;
 import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
 import net.minecraft.client.world.ClientWorld;
 import net.minecraft.util.math.BlockPos;
@@ -17,13 +14,11 @@ import net.minecraft.util.math.vector.Vector3d;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 import net.minecraftforge.client.event.RenderWorldLastEvent;
-import net.minecraftforge.client.model.data.EmptyModelData;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 import org.lwjgl.opengl.GL11;
 
 import javax.annotation.Nullable;
-import java.util.Random;
 
 /**
  * Draws the capture selection as a translucent box. The box is server-side
@@ -51,6 +46,7 @@ public final class CaptureBoxRenderer {
         if (lastLevel != null && minecraft.level != lastLevel) {
             ClientCaptureBox.clear();
             PlacementPreview.stop();
+            GhostRenderer.release();
         }
         lastLevel = minecraft.level;
 
@@ -64,6 +60,9 @@ public final class CaptureBoxRenderer {
         boolean hasBox = first != null && second != null;
         boolean hasPreview = PlacementPreview.active()
                 && PlacementPreview.origin() != null;
+        if (!hasPreview || PlacementPreview.ghost() == null) {
+            GhostRenderer.release();
+        }
         if (!hasBox && !hasPreview) {
             return;
         }
@@ -150,7 +149,7 @@ public final class CaptureBoxRenderer {
         drawFaces(matrixStack, buffer, min, max, red, green, blue, 0.10F);
         tessellator.end();
 
-        drawGhost(matrixStack, tessellator);
+        drawGhost(matrixStack);
 
         RenderSystem.disableDepthTest();
         RenderSystem.lineWidth(2.0F);
@@ -161,70 +160,14 @@ public final class CaptureBoxRenderer {
     }
 
     /** Translucent block models of the structure, at the preview position. */
-    private static void drawGhost(MatrixStack matrixStack, Tessellator tessellator) {
-        Minecraft minecraft = Minecraft.getInstance();
+    private static void drawGhost(MatrixStack matrixStack) {
         GhostStructure ghost = PlacementPreview.ghost();
         BlockPos origin = PlacementPreview.origin();
-        if (ghost == null || origin == null || minecraft.level == null
-                || ghost.blockCount() == 0 || PlacementPreview.outsideWorld()) {
+        if (ghost == null || origin == null || ghost.blockCount() == 0
+                || PlacementPreview.outsideWorld()) {
             return;
         }
-
-        BlockRendererDispatcher dispatcher = minecraft.getBlockRenderer();
-        Random random = new Random(0L);
-        BufferBuilder buffer = tessellator.getBuilder();
-
-        // The caller disabled textures for the box, so enable them again for the
-        // block atlas and put the state back afterwards.
-        RenderSystem.enableTexture();
-        minecraft.getTextureManager().bind(AtlasTexture.LOCATION_BLOCKS);
-        RenderSystem.enableBlend();
-        RenderSystem.defaultBlendFunc();
-        RenderSystem.enableDepthTest();
-        RenderSystem.depthMask(false);
-
-        // The shared tessellator buffer is 2 MiB, which a large structure can
-        // exceed, so the ghost is flushed in batches instead of one draw call.
-        final int batchSize = 512;
-        int batch = 0;
-        boolean started = false;
-
-        matrixStack.pushPose();
-        matrixStack.translate(origin.getX(), origin.getY(), origin.getZ());
-        GhostVertexBuilder ghostBuilder = new GhostVertexBuilder(buffer);
-        for (int index = 0; index < ghost.blockCount(); index++) {
-            if (!ghost.visible(index)) {
-                continue;
-            }
-            BlockState state = ghost.state(index);
-            if (state.isAir()) {
-                continue;
-            }
-            if (!started) {
-                buffer.begin(GL11.GL_QUADS, DefaultVertexFormats.BLOCK);
-                started = true;
-            }
-            int packed = ghost.position(index);
-            int x = packed & 1023;
-            int y = (packed >> 10) & 1023;
-            int z = (packed >> 20) & 1023;
-            matrixStack.pushPose();
-            matrixStack.translate(x, y, z);
-            dispatcher.renderModel(state, origin.offset(x, y, z), minecraft.level,
-                    matrixStack, ghostBuilder, false, random, EmptyModelData.INSTANCE);
-            matrixStack.popPose();
-            if (++batch >= batchSize) {
-                tessellator.end();
-                started = false;
-                batch = 0;
-            }
-        }
-        if (started) {
-            tessellator.end();
-        }
-        matrixStack.popPose();
-
-        RenderSystem.disableTexture();
+        GhostRenderer.draw(matrixStack, ghost, origin);
     }
 
     private static void drawFaces(MatrixStack matrixStack, BufferBuilder buffer,

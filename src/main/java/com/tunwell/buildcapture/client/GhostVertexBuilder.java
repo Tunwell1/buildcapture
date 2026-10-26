@@ -6,19 +6,20 @@ import net.minecraftforge.api.distmarker.OnlyIn;
 
 /**
  * Wraps the normal block vertex pipeline for the placement ghost: every vertex
- * gets a fixed translucency and full block/sky light, so the preview is easy to
- * tell apart from real blocks and does not darken in caves.
+ * gets a fixed alpha and full block/sky light, so the preview is easy to tell
+ * apart from real blocks and does not darken in caves.
  */
 @OnlyIn(Dist.CLIENT)
 final class GhostVertexBuilder implements IVertexBuilder {
-    private static final int ALPHA = 150;
     /** Packed block/sky light for a bright preview (0xF000F0). */
     private static final int FULL_BRIGHT = 0xF000F0;
 
     private final IVertexBuilder delegate;
+    private final int alpha;
 
-    GhostVertexBuilder(IVertexBuilder delegate) {
+    GhostVertexBuilder(IVertexBuilder delegate, int alpha) {
         this.delegate = delegate;
+        this.alpha = alpha;
     }
 
     @Override
@@ -29,7 +30,7 @@ final class GhostVertexBuilder implements IVertexBuilder {
 
     @Override
     public IVertexBuilder color(int red, int green, int blue, int alpha) {
-        delegate.color(red, green, blue, ALPHA);
+        delegate.color(red, green, blue, this.alpha);
         return this;
     }
 

@@ -1,6 +1,19 @@
 Build Capture changelog
 =======================
 
+1.1.1
+-----
+
+Preview
+- Large placement previews no longer re-tessellate every block model on every
+  frame. The ghost is baked into one cached vertex buffer when the structure,
+  rotation or the 16-block tint cell changes, and is then re-drawn with a
+  translation, which removes the per-frame CPU cost that made builds with tens
+  of thousands of blocks lag. Moving the preview one block does not rebuild it.
+- New option `capture.previewTranslucent` (default true). Turning it off draws a
+  solid preview; it is mostly a look/blending option, since the geometry cost is
+  cached either way.
+
 1.1.0
 -----
 
