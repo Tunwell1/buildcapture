@@ -1,4 +1,4 @@
-# Build Capture — store copy (1.0.0)
+# Build Capture — store copy (1.1.0)
 
 Ready-to-paste text for Modrinth and CurseForge. Keep it in sync with the
 released jar.
@@ -8,21 +8,21 @@ released jar.
 | Field | Value |
 | --- | --- |
 | Name | Build Capture |
-| Version | 1.0.0 |
+| Version | 1.1.0 |
 | Minecraft | 1.16.5 |
 | Loader | Forge 36.2.42 or newer (1.16.x) |
 | License | All Rights Reserved |
 | Environment | Client and server |
 | Modrinth categories | Utility, Management |
 | CurseForge categories | Server Utility, Utility & QoL |
-| File | `buildcapture-1.0.0.jar` |
+| File | `buildcapture-1.1.0.jar` |
 | Mod id | `buildcapture` |
 
 Short summary (Modrinth / CurseForge "Summary", under 256 characters):
 
 > Select any build and save it as a standard datapack structure. Drag the box
-> with the mouse, undo mistakes, keep a library shared by every world — no
-> WorldEdit and no proprietary format.
+> with the mouse, preview placements, import .nbt files in-game and keep a
+> library shared by every world — no WorldEdit and no proprietary format.
 
 ---
 
@@ -48,8 +48,9 @@ dependency on WorldEdit.
    `/capture pos2`.
 3. Run `/capture save mybase/tower`. The name is free-form: a namespace is added
    automatically, and `castle/tower` keeps its folder.
-4. Use it at once with `/capture place mybase/tower`, or run `/capture reload`
-   to enable the datapack for structure blocks.
+4. Press `C` (rebindable) or run `/capture gui` to open the browser, pick the
+   capture and press Place to preview it in the world; right-click confirms.
+   `/capture reload` makes the datapack available to structure blocks.
 
 ### Editing the box
 
@@ -75,6 +76,35 @@ When you look at a face almost straight on, the crosshair cannot express depth,
 so the face is pushed or pulled by moving the mouse up and down while dragging.
 Every step is sent to the server, which clamps it to the build height and
 `capture.maxSize`, so the selection cannot end up invalid or outside the world.
+
+The selection is dropped after a successful save, so the box does not stay on
+screen. Set `capture.clearAfterSave` to `false` to keep it for saving the same
+area under several names.
+
+### In-game browser
+
+Press `C` or run `/capture gui`. The screen lists every capture from the world
+datapack and the shared library with its dimensions and file size, has a search
+box, and marks world-only, library-only and mirrored entries with a coloured dot.
+
+**Place** does not drop the build immediately: the structure is outlined as a
+green box at the target spot (red when it does not fit the build height). Move
+it with the scroll wheel, use `Ctrl`+scroll for the vertical axis, the arrow keys
+for single blocks and `R` to rotate. Right-click (or Enter) places it;
+middle-click or Escape cancels. Nothing is written until you confirm, and the
+server re-checks the id, distance and build height.
+
+**Import .nbt** opens the system file dialog. You can also drop one or more
+`.nbt` files onto the game window. The client uploads the file to the server in
+chunks (the serverbound packet limit is 32 KiB), the server validates it as a
+structure and writes it to both the world datapack and the shared library under
+a free id: `castle.nbt` becomes `buildcapture:castle`, or `buildcapture:castle_2`
+if that name is taken. Files saved by a newer Minecraft are accepted with a
+DataVersion warning. Only operators can import.
+
+**Delete** removes the entry from both places, keeping a backup, and asks for a
+second click first. **Open library folder** opens `buildcapture_structures` in
+the file manager — only meaningful when the server runs on your own machine.
 
 ### Library, backups and undo
 
@@ -102,6 +132,7 @@ capture was new).
 | `/capture move <dir> [n]` | Move the whole box without changing its size. |
 | `/capture save <name>` | Save the box as a datapack structure. |
 | `/capture place <name> [90\|180\|270]` | Place a captured structure in front of you. |
+| `/capture gui` | Open the structure browser (same as the `C` key). |
 | `/capture list` | List captures from the world and the library. |
 | `/capture undo` | Restore or delete your last capture. |
 | `/capture status` | Show both corners, the box size and the library folder. |
@@ -114,19 +145,25 @@ capture was new).
 | --- | --- | --- |
 | `capture.maxSize` | 64 | Maximum blocks per side (1–256). |
 | `capture.libraryDir` | `buildcapture_structures` | Shared library folder; empty string disables it. |
+| `capture.clearAfterSave` | `true` | Drop the selection after a successful save. |
+| `capture.importMaxMb` | 16 | Largest `.nbt` file the browser accepts (1–64 MB). |
 
 ### Multiplayer and permissions
 
 The selection lives on the server, per player, and survives relogging. The
 commands work with only the server mod installed; the client mod adds the
-outline, the face highlight and mouse editing. Players without the mod can join
-a server that has it and play normally — they just do not see the box.
+outline, the face highlight, mouse editing, the browser and the placement
+preview. Imports are uploaded to the server and checked there, so they work on
+multiplayer servers — the client never writes files directly. Players without
+the mod can join a server that has it and play normally — they just do not see
+the box or the browser.
 
 ### Compatibility and limits
 
 - Minecraft 1.16.5, Forge 36.2.42+.
 - A 1.20.1 version is not available yet.
 - 64 blocks per side by default, up to 256 in the config.
+- Imported files are limited to 512 blocks per side and `capture.importMaxMb`.
 - A capture containing a structure block is refused, to avoid recursive
   structure placement.
 - `/capture undo` only covers the last capture of the player who ran it.
@@ -144,9 +181,13 @@ mod.
    from an angle that shows two sides.
 2. Holding the face-edit key with one face highlighted orange, close enough that
    the highlight is obvious.
-3. Chat after `/capture save` showing "Saved ..." and "Also copied to the shared
-   library", with the box still visible.
-4. Optional: the library folder open next to the game, or a structure placed with
+3. The structure browser: several entries with dimensions and file sizes, one
+   selected, with the Place / Import / Delete row visible.
+4. A placement preview: the green footprint box of a build on the ground, with
+   the chat hint and the player in frame.
+5. Chat after `/capture save` showing "Saved ..." and "Also copied to the shared
+   library", with the box already gone (clear after save).
+6. Optional: the library folder open next to the game, or a structure placed with
    `/capture place`.
 
 Take them at 1920×1080 or larger; Modrinth prefers 16:9.

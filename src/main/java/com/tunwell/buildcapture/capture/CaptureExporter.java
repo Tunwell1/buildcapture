@@ -211,7 +211,7 @@ public final class CaptureExporter {
         }
     }
 
-    private static boolean writePackMeta(MinecraftServer server) {
+    public static boolean writePackMeta(MinecraftServer server) {
         Path dir = datapackDir(server);
         Path meta = dir.resolve("pack.mcmeta");
         if (Files.exists(meta)) {

@@ -66,7 +66,8 @@ public final class CaptureInteraction {
     public static void updateHover() {
         hoverAxis = -1;
         Minecraft minecraft = Minecraft.getInstance();
-        if (minecraft.player == null || minecraft.level == null || minecraft.screen != null) {
+        if (minecraft.player == null || minecraft.level == null || minecraft.screen != null
+                || PlacementPreview.active()) {
             return;
         }
         if (dragging) {
@@ -84,9 +85,21 @@ public final class CaptureInteraction {
     }
 
     @SubscribeEvent
-    public static void onRawMouse(InputEvent.RawMouseEvent event) {
+    public static void onKey(InputEvent.KeyInputEvent event) {
         Minecraft minecraft = Minecraft.getInstance();
         if (minecraft.player == null || minecraft.level == null || minecraft.screen != null) {
+            return;
+        }
+        if (CaptureKeys.MENU.consumeClick()) {
+            CaptureScreen.open();
+        }
+    }
+
+    @SubscribeEvent
+    public static void onRawMouse(InputEvent.RawMouseEvent event) {
+        Minecraft minecraft = Minecraft.getInstance();
+        if (minecraft.player == null || minecraft.level == null || minecraft.screen != null
+                || PlacementPreview.active()) {
             return;
         }
         if (event.getButton() != GLFW.GLFW_MOUSE_BUTTON_LEFT) {
@@ -118,6 +131,7 @@ public final class CaptureInteraction {
         }
         Minecraft minecraft = Minecraft.getInstance();
         if (minecraft.player == null || minecraft.level == null || minecraft.screen != null
+                || PlacementPreview.active()
                 || !CaptureKeys.FACE_EDIT.isDown()) {
             return;
         }

@@ -45,6 +45,7 @@ public final class CaptureBoxRenderer {
         Minecraft minecraft = Minecraft.getInstance();
         if (lastLevel != null && minecraft.level != lastLevel) {
             ClientCaptureBox.clear();
+            PlacementPreview.stop();
         }
         lastLevel = minecraft.level;
 
@@ -55,18 +56,12 @@ public final class CaptureBoxRenderer {
         CaptureInteraction.updateHover();
         BlockPos first = ClientCaptureBox.first();
         BlockPos second = ClientCaptureBox.second();
-        if (first == null || second == null) {
+        boolean hasBox = first != null && second != null;
+        boolean hasPreview = PlacementPreview.active()
+                && PlacementPreview.origin() != null;
+        if (!hasBox && !hasPreview) {
             return;
         }
-
-        BlockPos min = new BlockPos(
-                Math.min(first.getX(), second.getX()),
-                Math.min(first.getY(), second.getY()),
-                Math.min(first.getZ(), second.getZ()));
-        BlockPos max = new BlockPos(
-                Math.max(first.getX(), second.getX()),
-                Math.max(first.getY(), second.getY()),
-                Math.max(first.getZ(), second.getZ()));
 
         Vector3d camera = minecraft.gameRenderer.getMainCamera().getPosition();
         MatrixStack matrixStack = event.getMatrixStack();
@@ -82,28 +77,43 @@ public final class CaptureBoxRenderer {
         Tessellator tessellator = Tessellator.getInstance();
         BufferBuilder buffer = tessellator.getBuilder();
 
-        RenderSystem.enableDepthTest();
-        buffer.begin(GL11.GL_QUADS, DefaultVertexFormats.POSITION_COLOR);
-        drawFaces(matrixStack, buffer, min, max, RED, GREEN, BLUE, FILL_ALPHA);
-        tessellator.end();
+        if (hasBox) {
+            BlockPos min = new BlockPos(
+                    Math.min(first.getX(), second.getX()),
+                    Math.min(first.getY(), second.getY()),
+                    Math.min(first.getZ(), second.getZ()));
+            BlockPos max = new BlockPos(
+                    Math.max(first.getX(), second.getX()),
+                    Math.max(first.getY(), second.getY()),
+                    Math.max(first.getZ(), second.getZ()));
 
-        // The highlighted face is always visible, like the outline, so it can be
-        // grabbed even when part of the box is behind terrain.
-        int hoverAxis = CaptureInteraction.hoveredAxis();
-        if (hoverAxis >= 0) {
-            RenderSystem.disableDepthTest();
+            RenderSystem.enableDepthTest();
             buffer.begin(GL11.GL_QUADS, DefaultVertexFormats.POSITION_COLOR);
-            drawHighlight(matrixStack, buffer, min, max, hoverAxis,
-                    CaptureInteraction.hoveredSide());
+            drawFaces(matrixStack, buffer, min, max, RED, GREEN, BLUE, FILL_ALPHA);
+            tessellator.end();
+
+            // The highlighted face is always visible, like the outline, so it can be
+            // grabbed even when part of the box is behind terrain.
+            int hoverAxis = CaptureInteraction.hoveredAxis();
+            if (hoverAxis >= 0) {
+                RenderSystem.disableDepthTest();
+                buffer.begin(GL11.GL_QUADS, DefaultVertexFormats.POSITION_COLOR);
+                drawHighlight(matrixStack, buffer, min, max, hoverAxis,
+                        CaptureInteraction.hoveredSide());
+                tessellator.end();
+            }
+
+            // The outline ignores depth so the corners stay visible through terrain.
+            RenderSystem.disableDepthTest();
+            RenderSystem.lineWidth(2.0F);
+            buffer.begin(GL11.GL_LINES, DefaultVertexFormats.POSITION_COLOR);
+            drawBox(matrixStack, buffer, min, max, RED, GREEN, BLUE);
             tessellator.end();
         }
 
-        // The outline ignores depth so the corners stay visible through terrain.
-        RenderSystem.disableDepthTest();
-        RenderSystem.lineWidth(2.0F);
-        buffer.begin(GL11.GL_LINES, DefaultVertexFormats.POSITION_COLOR);
-        drawBox(matrixStack, buffer, min, max, RED, GREEN, BLUE);
-        tessellator.end();
+        if (hasPreview) {
+            drawPreview(matrixStack, buffer, tessellator);
+        }
 
         RenderSystem.lineWidth(1.0F);
         RenderSystem.enableDepthTest();
@@ -112,6 +122,35 @@ public final class CaptureBoxRenderer {
         RenderSystem.disableBlend();
         RenderSystem.enableTexture();
         matrixStack.popPose();
+    }
+
+    /** Footprint of the structure about to be placed, green when it fits the world. */
+    private static void drawPreview(MatrixStack matrixStack, BufferBuilder buffer,
+                                    Tessellator tessellator) {
+        BlockPos origin = PlacementPreview.origin();
+        if (origin == null) {
+            return;
+        }
+        int[] size = PlacementPreview.size();
+        BlockPos min = origin;
+        BlockPos max = origin.offset(size[0] - 1, size[1] - 1, size[2] - 1);
+
+        boolean outside = PlacementPreview.outsideWorld();
+        float red = outside ? 1.0F : 0.35F;
+        float green = outside ? 0.35F : 0.95F;
+        float blue = outside ? 0.35F : 0.55F;
+
+        RenderSystem.enableDepthTest();
+        buffer.begin(GL11.GL_QUADS, DefaultVertexFormats.POSITION_COLOR);
+        drawFaces(matrixStack, buffer, min, max, red, green, blue, 0.10F);
+        tessellator.end();
+
+        RenderSystem.disableDepthTest();
+        RenderSystem.lineWidth(2.0F);
+        buffer.begin(GL11.GL_LINES, DefaultVertexFormats.POSITION_COLOR);
+        drawBox(matrixStack, buffer, min, max, red, green, blue);
+        tessellator.end();
+        RenderSystem.lineWidth(1.0F);
     }
 
     private static void drawFaces(MatrixStack matrixStack, BufferBuilder buffer,

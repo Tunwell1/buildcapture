@@ -21,12 +21,19 @@ public final class CaptureKeys {
     public static final KeyBinding FACE_EDIT = new KeyBinding(
             "key.buildcapture.capture_face_edit", GLFW.GLFW_KEY_LEFT_ALT,
             "key.buildcapture.capture");
+    public static final KeyBinding MENU = new KeyBinding(
+            "key.buildcapture.capture_menu", GLFW.GLFW_KEY_C,
+            "key.buildcapture.capture");
 
     private CaptureKeys() {
     }
 
     @SubscribeEvent
     public static void onClientSetup(FMLClientSetupEvent event) {
-        event.enqueueWork(() -> ClientRegistry.registerKeyBinding(FACE_EDIT));
+        event.enqueueWork(() -> {
+            ClientRegistry.registerKeyBinding(FACE_EDIT);
+            ClientRegistry.registerKeyBinding(MENU);
+            ClientDropHandler.install();
+        });
     }
 }

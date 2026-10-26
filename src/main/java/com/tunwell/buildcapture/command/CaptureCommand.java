@@ -8,6 +8,7 @@ import com.tunwell.buildcapture.capture.StructureLibrary;
 import com.tunwell.buildcapture.config.BuildCaptureConfig;
 import com.tunwell.buildcapture.network.CaptureBoxPacket;
 import com.tunwell.buildcapture.network.ModNetwork;
+import com.tunwell.buildcapture.network.OpenGuiPacket;
 import com.tunwell.buildcapture.template.TemplateExport;
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.arguments.IntegerArgumentType;
@@ -116,6 +117,8 @@ public final class CaptureCommand {
                                 .then(rotationNode("90", Rotation.CLOCKWISE_90))
                                 .then(rotationNode("180", Rotation.CLOCKWISE_180))
                                 .then(rotationNode("270", Rotation.COUNTERCLOCKWISE_90))))
+                .then(Commands.literal("gui")
+                        .executes(context -> openGui(context.getSource())))
                 .then(Commands.literal("list")
                         .executes(context -> list(context.getSource())))
                 .then(Commands.literal("undo")
@@ -131,6 +134,12 @@ public final class CaptureCommand {
     public static void refresh(CommandDispatcher<CommandSource> dispatcher) {
         dispatcher.getRoot().getChildren().removeIf(node -> "capture".equals(node.getName()));
         register(dispatcher);
+    }
+
+    private static int openGui(CommandSource source) throws CommandSyntaxException {
+        ServerPlayerEntity player = source.getPlayerOrException();
+        ModNetwork.CHANNEL.send(PacketDistributor.PLAYER.with(() -> player), new OpenGuiPacket());
+        return 1;
     }
 
     private static int setCorner(CommandSource source, int corner) throws CommandSyntaxException {
@@ -327,6 +336,10 @@ public final class CaptureCommand {
                 }
                 source.sendSuccess(new TranslationTextComponent(
                         "buildcapture.capture.saved_hint", id.toString()), false);
+                if (BuildCaptureConfig.CAPTURE_CLEAR_AFTER_SAVE.get()) {
+                    CaptureSelection.clear(player);
+                    sendBox(player);
+                }
                 return 1;
             }
             case TOO_LARGE:

@@ -20,8 +20,8 @@ Quick start
 1. Aim at a block and run `/capture pos1`.
 2. Aim at the opposite corner and run `/capture pos2`.
 3. Run `/capture save castle/tower` (the name is free-form).
-4. Use it at once with `/capture place castle/tower`, or run `/capture reload`
-   to make the datapack available to structure blocks.
+4. Press `C` (rebindable) to open the structure browser, pick the capture and
+   press Place to preview it, then right-click to confirm.
 
 Commands
 --------
@@ -35,6 +35,7 @@ Commands
 | `/capture move <direction> [blocks]` | Move the whole box without changing its size. |
 | `/capture save <name>` | Save the box as a datapack structure. |
 | `/capture place <name> [90\|180\|270]` | Place a capture in front of you. |
+| `/capture gui` | Open the structure browser (same as the `C` key). |
 | `/capture list` | List captures from the world and the shared library. |
 | `/capture undo` | Restore or delete your last capture. |
 | `/capture status` | Show both corners, the box size and the library folder. |
@@ -66,6 +67,36 @@ block is refused, so a capture cannot recursively trigger another structure.
 The datapack is created on the first save. `/capture place` uses the in-memory
 copy immediately; `/capture reload` (or a restart) enables the datapack for
 structure blocks and vanilla commands.
+
+The selection is dropped after a successful save, so the box does not stay on
+screen. Set `capture.clearAfterSave` to `false` to keep it for repeated saves
+of the same area.
+
+In-game browser
+---------------
+Press `C` (rebindable under Controls) or run `/capture gui`. The screen lists
+every capture from the world and the shared library, with its size and file
+weight, and has a search box.
+
+- **Place** starts a placement preview instead of dropping the build at once.
+  The structure is drawn as a green box at the target spot; red means it does
+  not fit inside the build height. Move it with the scroll wheel, use
+  `Ctrl`+scroll for the vertical axis, the arrow keys for single blocks and
+  `R` to rotate. Right-click (or Enter) places it, middle-click or Escape
+  cancels. Nothing is written until you confirm.
+- **Import .nbt** opens the system file dialog and uploads the file to the
+  server in chunks (the serverbound packet limit is 32 KiB). You can also drop
+  one or more `.nbt` files onto the game window. The file is validated on the
+  server and written to both the world datapack and the shared library, under a
+  free id (`castle.nbt` becomes `buildcapture:castle`, or `buildcapture:castle_2`
+  if the name is taken). Only operators can import.
+- **Delete** removes the entry from the library and the world datapack, keeping
+  a backup. It asks for a second click first.
+- **Open library folder** opens `buildcapture_structures` in the file manager.
+  It only works when the server runs on your own machine.
+
+Uploading is capped by `capture.importMaxMb`. Everything the browser does is
+checked again on the server: the client never writes files directly.
 
 Interactive editing
 -------------------
@@ -120,13 +151,16 @@ Configuration
 | --- | --- | --- |
 | `capture.maxSize` | 64 | Maximum blocks per side (1-256). |
 | `capture.libraryDir` | `buildcapture_structures` | Shared library folder; an empty string disables it. |
+| `capture.clearAfterSave` | `true` | Drop the selection after a successful save. |
+| `capture.importMaxMb` | 16 | Largest `.nbt` file the browser accepts (1-64 MB). |
 
 Multiplayer
 -----------
 The selection lives on the server, per player, and survives a relog. The
 commands work with only the server mod installed; the client mod adds the box,
-the face highlight and mouse editing. Players without the mod can join a server
-that has it and play normally - they just do not see the selection box.
+the face highlight, mouse editing, the structure browser and the placement
+preview. Players without the mod can join a server that has it and play
+normally - they just do not see the selection box.
 
 Building from source
 --------------------
