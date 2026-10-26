@@ -1,6 +1,7 @@
 package com.tunwell.buildcapture.capture;
 
 import com.tunwell.buildcapture.BuildCapture;
+import com.tunwell.buildcapture.config.BuildCaptureConfig;
 import com.tunwell.buildcapture.network.ModNetwork;
 import com.tunwell.buildcapture.network.PreviewDataPacket;
 import com.tunwell.buildcapture.network.StructureListPacket;
@@ -35,9 +36,13 @@ import java.util.List;
 public final class StructureActions {
     private static final double MAX_PLACE_DISTANCE = 256.0D;
 
-    /** Upper bound on the blocks sent for a ghost; larger structures use the box. */
-    private static final int MAX_GHOST_BLOCKS = 12_000;
-    private static final int MAX_GHOST_PALETTE = 1_024;
+    /**
+     * Hard upper bound on the blocks sent for a ghost. The config value is
+     * clamped to this so a modified config cannot exceed the 1 MiB clientbound
+     * payload limit.
+     */
+    private static final int MAX_GHOST_BLOCKS = 80_000;
+    private static final int MAX_GHOST_PALETTE = 1_536;
     /** Positions are packed into 10 bits per axis in {@link PreviewDataPacket}. */
     private static final int MAX_GHOST_AXIS = 1_024;
     private static final BlockState[] NO_STATES = new BlockState[0];
@@ -112,7 +117,9 @@ public final class StructureActions {
         }
 
         int total = countGhostBlocks(palette, blocksList, sizeX, sizeY, sizeZ);
-        if (total > MAX_GHOST_BLOCKS) {
+        int maxBlocks = Math.min(MAX_GHOST_BLOCKS,
+                BuildCaptureConfig.CAPTURE_PREVIEW_MAX_BLOCKS.get());
+        if (total > maxBlocks) {
             sendPreviewData(player, id, sizeX, sizeY, sizeZ, total, true,
                     NO_STATES, NO_POSITIONS, NO_POSITIONS);
             return;

@@ -9,6 +9,7 @@ public final class BuildCaptureConfig {
     public static final ForgeConfigSpec.ConfigValue<String> CAPTURE_LIBRARY_DIR;
     public static final ForgeConfigSpec.BooleanValue CAPTURE_CLEAR_AFTER_SAVE;
     public static final ForgeConfigSpec.IntValue CAPTURE_IMPORT_MAX_MB;
+    public static final ForgeConfigSpec.IntValue CAPTURE_PREVIEW_MAX_BLOCKS;
 
     static {
         ForgeConfigSpec.Builder builder = new ForgeConfigSpec.Builder();
@@ -31,6 +32,11 @@ public final class BuildCaptureConfig {
                         "Imported files are uploaded from the client in chunks and are written to",
                         "both the world datapack and the shared library.")
                 .defineInRange("importMaxMb", 16, 1, 64);
+        CAPTURE_PREVIEW_MAX_BLOCKS = builder
+                .comment("Largest structure the placement preview draws block by block.",
+                        "Bigger structures fall back to the footprint box so the client stays responsive.",
+                        "Lower this on weak clients; the hard packet limit is 80000 blocks.")
+                .defineInRange("previewMaxBlocks", 50_000, 1_000, 80_000);
         builder.pop();
 
         SPEC = builder.build();

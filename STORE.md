@@ -89,7 +89,7 @@ box, and marks world-only, library-only and mirrored entries with a coloured dot
 
 **Place** does not drop the build immediately: the structure is shown as
 translucent block models inside a green footprint box at the target spot (red
-when it does not fit the build height). Structures over 12,000 blocks fall back
+when it does not fit the build height). Structures over 50,000 blocks fall back
 to the box alone. Move it with the scroll wheel, use `Ctrl`+scroll for the
 vertical axis, the arrow keys for single blocks and `R` to rotate. Right-click
 (or Enter) places it; middle-click or Escape cancels. Nothing is written until

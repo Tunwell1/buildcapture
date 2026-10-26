@@ -80,7 +80,7 @@ weight, and has a search box.
 
 - **Place** starts a placement preview instead of dropping the build at once.
   The structure is drawn as translucent block models inside a green footprint
-  box; red means it does not fit inside the build height. Structures over 12,000
+  box; red means it does not fit inside the build height. Structures over 50,000
   blocks fall back to the box alone. Move it with the scroll wheel, use
   `Ctrl`+scroll for the vertical axis, the arrow keys for single blocks and
   `R` to rotate. Right-click (or Enter) places it, middle-click or Escape
@@ -158,6 +158,7 @@ Configuration
 | `capture.libraryDir` | `buildcapture_structures` | Shared library folder; an empty string disables it. |
 | `capture.clearAfterSave` | `true` | Drop the selection after a successful save. |
 | `capture.importMaxMb` | 16 | Largest `.nbt` file the browser accepts (1-64 MB). |
+| `capture.previewMaxBlocks` | 50 000 | Largest build drawn block by block in the preview (1 000-80 000); bigger builds show only the box. |
 
 Multiplayer
 -----------
