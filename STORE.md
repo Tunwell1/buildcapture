@@ -1,4 +1,4 @@
-# Build Capture — store copy (1.1.2)
+# Build Capture - store copy (1.1.3)
 
 Ready-to-paste text for Modrinth and CurseForge. Keep it in sync with the
 released jar.
@@ -8,14 +8,14 @@ released jar.
 | Field | Value |
 | --- | --- |
 | Name | Build Capture |
-| Version | 1.1.2 |
+| Version | 1.1.3 |
 | Minecraft | 1.16.5 |
 | Loader | Forge 36.2.42 or newer (1.16.x) |
 | License | All Rights Reserved |
 | Environment | Client and server |
 | Modrinth categories | Utility, Management |
 | CurseForge categories | Server Utility, Utility & QoL |
-| File | `buildcapture-1.1.2.jar` |
+| File | `buildcapture-1.1.3.jar` |
 | Mod id | `buildcapture` |
 
 Short summary (Modrinth / CurseForge "Summary", under 256 characters):
@@ -65,12 +65,18 @@ defaults to one block. The box always keeps at least one block and stays inside
 the build height and `capture.maxSize`.
 
 With the client mod installed you can also edit the box directly. Hold the
-face-edit key (left Alt by default; rebindable under Controls), and the face
-under the crosshair is highlighted — through terrain if necessary. Then:
+face-edit key (left Alt by default; rebindable under Controls) and a small panel
+shows the size, the coordinates, the gestures and the last step. Moving needs no
+aiming and matches the placement preview:
 
-- drag the face with the left mouse button to resize that side;
-- hold Shift while dragging to move the whole box;
-- scroll to nudge the face one block, or Shift+scroll for five.
+- scroll moves the whole box along your view;
+- `Ctrl`+scroll moves it up or down;
+- the arrow keys move it one block, `Page Up` / `Page Down` move it vertically;
+- `Shift` turns any of those into five-block steps.
+
+Resizing needs a face: drag it with the left mouse button, or hold Shift while
+dragging to move the whole box instead. The face under the crosshair is
+highlighted, through terrain if necessary.
 
 When you look at a face almost straight on, the crosshair cannot express depth,
 so the face is pushed or pulled by moving the mouse up and down while dragging.
@@ -145,6 +151,19 @@ together.
 | `/capture clear` | Drop the selection. |
 | `/capture reload` | Rescan and enable the capture datapack. |
 
+### Keys
+
+Everything is rebindable under Controls, category "Build Capture". The corner
+and save keys run the same server code as the commands, so the chat window is
+not needed for the normal flow.
+
+| Key | Action |
+| --- | --- |
+| `[` / `]` | Set corner 1 / 2 at the targeted block. |
+| `Enter` | Save the selection; the name dialog is pre-filled with a timestamp. |
+| `C` | Open the structure browser. |
+| `Left Alt` (hold) | Edit the selection: move with the wheel, resize by dragging a face. |
+
 ### Configuration
 
 | Option | Default | Meaning |
@@ -153,6 +172,8 @@ together.
 | `capture.libraryDir` | `buildcapture_structures` | Shared library folder; empty string disables it. |
 | `capture.clearAfterSave` | `true` | Drop the selection after a successful save. |
 | `capture.importMaxMb` | 16 | Largest `.nbt` file the browser accepts (1–64 MB). |
+| `capture.previewMaxBlocks` | `150000` | Largest preview drawn block by block (1000–150000). |
+| `capture.previewTranslucent` | `true` | Draw the preview as translucent block models; off is solid. |
 
 ### Multiplayer and permissions
 
@@ -187,8 +208,8 @@ mod.
 
 1. A house wrapped in the translucent box with the through-terrain outline,
    from an angle that shows two sides.
-2. Holding the face-edit key with one face highlighted orange, close enough that
-   the highlight is obvious.
+2. Holding the face-edit key with one face highlighted orange and the corner
+   panel visible, close enough that the highlight is obvious.
 3. The structure browser: several entries with dimensions and file sizes, one
    selected, with the Place / Import / Delete row visible.
 4. A placement preview: the green footprint box of a build on the ground, with

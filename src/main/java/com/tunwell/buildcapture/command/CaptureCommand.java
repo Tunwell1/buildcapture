@@ -8,6 +8,7 @@ import com.tunwell.buildcapture.capture.CaptureUndo;
 import com.tunwell.buildcapture.capture.StructureLibrary;
 import com.tunwell.buildcapture.config.BuildCaptureConfig;
 import com.tunwell.buildcapture.network.CaptureBoxPacket;
+import com.tunwell.buildcapture.network.CaptureCommandPacket;
 import com.tunwell.buildcapture.network.ModNetwork;
 import com.tunwell.buildcapture.network.OpenGuiPacket;
 import com.tunwell.buildcapture.template.TemplateExport;
@@ -143,7 +144,33 @@ public final class CaptureCommand {
         return 1;
     }
 
-    private static int setCorner(CommandSource source, int corner) throws CommandSyntaxException {
+    /**
+     * Entry point for the key bindings. The packet handler has already checked
+     * the permission level; everything after this is the same code the commands
+     * run, so the selection checks and the messages cannot drift apart.
+     */
+    public static void handleClientRequest(ServerPlayerEntity player, int operation, String name) {
+        CommandSource source = player.createCommandSourceStack();
+        try {
+            switch (operation) {
+                case CaptureCommandPacket.CORNER1:
+                    setCorner(source, 1);
+                    break;
+                case CaptureCommandPacket.CORNER2:
+                    setCorner(source, 2);
+                    break;
+                case CaptureCommandPacket.SAVE:
+                    save(source, name);
+                    break;
+                default:
+                    break;
+            }
+        } catch (CommandSyntaxException exception) {
+            BuildCapture.LOGGER.debug("Ignored an incomplete capture request", exception);
+        }
+    }
+
+    public static int setCorner(CommandSource source, int corner) throws CommandSyntaxException {
         ServerPlayerEntity player = source.getPlayerOrException();
         BlockPos pos = targetedBlock(player);
         if (pos == null) {
@@ -302,7 +329,7 @@ public final class CaptureCommand {
         return new TranslationTextComponent("buildcapture.capture.dir." + direction);
     }
 
-    private static int save(CommandSource source, String rawName) throws CommandSyntaxException {
+    public static int save(CommandSource source, String rawName) throws CommandSyntaxException {
         ServerPlayerEntity player = source.getPlayerOrException();
         ResourceLocation id = parseId(rawName);
         if (id == null) {

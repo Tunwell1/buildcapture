@@ -1,6 +1,24 @@
 Build Capture changelog
 =======================
 
+1.1.3
+-----
+
+Selection
+- The box no longer has to be aimed at to be moved. With the face-edit key
+  held, the scroll wheel now moves the whole box along your view and Ctrl+scroll
+  moves it up or down, matching the placement preview. The arrow keys move it one
+  block and Page Up / Page Down cover the vertical axis; Shift gives five-block
+  steps. Resizing still drags a face, which is the only unambiguous way to pick a
+  side.
+- The corner panel shows the selection while the face-edit key is held: size,
+  coordinates, the available gestures and the last step ("Moved: up",
+  "Resizing: north"). The controls no longer scroll away in the chat.
+- New keys: `[` and `]` set the corners, `Enter` opens a save dialog with the
+  name pre-filled from the timestamp, so the normal capture flow never opens the
+  chat window. All bindings are rebindable.
+- Network protocol bumped to 6, so update the client and the server together.
+
 1.1.2
 -----
 

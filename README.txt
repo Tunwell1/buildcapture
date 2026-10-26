@@ -48,6 +48,21 @@ corner 1 at the minimum and corner 2 at the maximum of the box. Expanding is
 refused if the result would exceed `capture.maxSize` or leave the build height
 of the current dimension.
 
+Keys
+----
+Everything can be rebound under Controls, category "Build Capture".
+
+| Key | Action |
+| --- | --- |
+| `[` | Set corner 1 at the targeted block (same as `/capture pos1`). |
+| `]` | Set corner 2. |
+| `Enter` | Save the selection. A small dialog asks for the name, pre-filled with a timestamp: Enter confirms, Esc cancels. |
+| `C` | Open the structure browser. |
+| `Left Alt` (hold) | Edit the selection, see Interactive editing. |
+
+The three corner/save keys run exactly the same server code as the commands,
+so the checks and messages are identical; the chat window is never needed.
+
 Capturing
 ---------
 `/capture save` writes to the world's own datapack:
@@ -106,12 +121,25 @@ checked again on the server: the client never writes files directly.
 
 Interactive editing
 -------------------
-Hold the face-edit key (left Alt by default; rebind it under Controls) and the
-face under the crosshair is highlighted. Then:
+Hold the face-edit key (left Alt by default; rebind it under Controls). A small
+panel appears in the corner with the size, the coordinates and the gestures, so
+the controls are visible instead of scrolling away in the chat. It also echoes
+the last step ("Moved: up", "Resizing: north"), which makes the wheel
+predictable.
 
-- drag the face with the left mouse button to move that side;
-- hold Shift while dragging to move the whole box along that axis;
-- scroll to nudge the face one block, or Shift+scroll for five.
+Moving does not need you to point at anything; it follows the same gestures as
+the placement preview and is relative to where you look:
+
+- scroll moves the whole box along your view, one block per notch;
+- `Ctrl`+scroll moves it up or down;
+- the arrow keys move it one block, `Page Up` / `Page Down` move it vertically;
+- hold `Shift` for five-block steps.
+
+Resizing needs a face, because it is the only unambiguous way to say which side
+should change:
+
+- drag a face with the left mouse button to move that side;
+- hold `Shift` while dragging to move the whole box instead.
 
 A face you look at straight on is pushed or pulled by looking up or down while
 dragging: pointing at a surface cannot express distance along its normal. The

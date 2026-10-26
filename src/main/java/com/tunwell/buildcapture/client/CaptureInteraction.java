@@ -2,13 +2,19 @@ package com.tunwell.buildcapture.client;
 
 import com.tunwell.buildcapture.BuildCapture;
 import com.tunwell.buildcapture.network.CaptureBoundsPacket;
+import com.tunwell.buildcapture.network.CaptureCommandPacket;
 import com.tunwell.buildcapture.network.ModNetwork;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screen.Screen;
+import net.minecraft.util.Direction;
+import net.minecraft.util.Util;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.vector.Vector3d;
+import net.minecraft.util.text.ITextComponent;
+import net.minecraft.util.text.TranslationTextComponent;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
+import net.minecraftforge.client.event.GuiOpenEvent;
 import net.minecraftforge.client.event.InputEvent;
 import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
@@ -18,10 +24,16 @@ import org.lwjgl.glfw.GLFW;
 import javax.annotation.Nullable;
 
 /**
- * Interactive editing of the capture box: hold {@link CaptureKeys#FACE_EDIT}
- * (left alt by default) to highlight the face under the crosshair, then drag it
- * with the left mouse button. Holding shift while dragging moves the whole box
- * instead of one face; the scroll wheel nudges the face one block at a time.
+ * Interactive editing of the capture box. Hold {@link CaptureKeys#FACE_EDIT}
+ * (left alt by default) and the box follows the same gestures as the placement
+ * ghost: scroll moves it along the view, Ctrl+scroll moves it up and down, the
+ * arrow keys move it one block, and shift multiplies the step. Dragging a face
+ * with the left mouse button still resizes that face, and shift+drag moves the
+ * whole box.
+ *
+ * <p>Moving no longer depends on pointing at a particular face, so it works the
+ * same no matter where the camera looks. Resizing does need a face, because that
+ * is the only unambiguous way to say which side should grow.</p>
  *
  * <p>The client only ever sends complete bounds. The server clamps them to the
  * build height and {@code capture.maxSize} and sends the result back, so the
@@ -33,6 +45,7 @@ import javax.annotation.Nullable;
 public final class CaptureInteraction {
     private static final double EPS = 0.003D;
     private static final double MAX_DISTANCE = 256.0D;
+    private static final long ACTION_MILLIS = 1400L;
 
     private static int hoverAxis = -1;
     private static int hoverSide;
@@ -49,6 +62,18 @@ public final class CaptureInteraction {
     private static float dragPitch;
     private static double pitchAccumulator;
 
+    @Nullable
+    private static String actionDirection;
+    private static boolean actionResize;
+    private static long actionAt;
+
+    /**
+     * Set when a screen closes, so the very key press that closed it (Enter to
+     * send chat, the save dialog's own Enter, Esc) does not fire a key binding
+     * from the world afterwards.
+     */
+    private static boolean swallowNextKey;
+
     private CaptureInteraction() {
     }
 
@@ -60,6 +85,39 @@ public final class CaptureInteraction {
     /** +1 for the face at the maximum corner, -1 for the minimum one. */
     public static int hoveredSide() {
         return hoverSide;
+    }
+
+    /**
+     * What the last box edit did, for the heads-up display, or {@code null} when
+     * nothing happened recently.
+     */
+    @Nullable
+    public static ITextComponent lastAction() {
+        if (actionDirection == null || Util.getMillis() - actionAt > ACTION_MILLIS) {
+            return null;
+        }
+        return new TranslationTextComponent(
+                actionResize ? "buildcapture.hud.face" : "buildcapture.hud.moved",
+                new TranslationTextComponent(actionDirection));
+    }
+
+    private static void note(int axis, int sign, boolean resize) {
+        if (sign == 0) {
+            return;
+        }
+        actionDirection = "buildcapture.capture.dir." + directionName(axis, sign);
+        actionResize = resize;
+        actionAt = Util.getMillis();
+    }
+
+    private static String directionName(int axis, int sign) {
+        if (axis == 1) {
+            return sign > 0 ? "up" : "down";
+        }
+        if (axis == 0) {
+            return sign > 0 ? "east" : "west";
+        }
+        return sign > 0 ? "south" : "north";
     }
 
     /** Recomputes the highlighted face; called once per rendered frame. */
@@ -85,14 +143,95 @@ public final class CaptureInteraction {
     }
 
     @SubscribeEvent
+    public static void onScreenChanged(GuiOpenEvent event) {
+        if (event.getGui() == null) {
+            swallowNextKey = true;
+        }
+    }
+
+    @SubscribeEvent
     public static void onKey(InputEvent.KeyInputEvent event) {
         Minecraft minecraft = Minecraft.getInstance();
-        if (minecraft.player == null || minecraft.level == null || minecraft.screen != null) {
+        // Always drain the queued clicks: chat lets key bindings count presses
+        // (passEvents), so a stale click must not survive until the world is
+        // back on screen.
+        boolean menu = CaptureKeys.MENU.consumeClick();
+        boolean corner1 = CaptureKeys.CORNER1.consumeClick();
+        boolean corner2 = CaptureKeys.CORNER2.consumeClick();
+        boolean save = CaptureKeys.SAVE.consumeClick();
+        boolean swallowed = swallowNextKey;
+        swallowNextKey = false;
+
+        if (minecraft.player == null || minecraft.level == null
+                || minecraft.screen != null || swallowed) {
             return;
         }
-        if (CaptureKeys.MENU.consumeClick()) {
-            CaptureScreen.open();
+        // The ghost owns Enter and the arrow keys while it is on screen.
+        if (PlacementPreview.active()) {
+            return;
         }
+        if (menu) {
+            CaptureScreen.open();
+            return;
+        }
+        if (corner1) {
+            requestCorner(CaptureCommandPacket.CORNER1);
+            return;
+        }
+        if (corner2) {
+            requestCorner(CaptureCommandPacket.CORNER2);
+            return;
+        }
+        if (save) {
+            requestSave();
+            return;
+        }
+        if (!CaptureKeys.FACE_EDIT.isDown()) {
+            return;
+        }
+        if (event.getAction() != GLFW.GLFW_PRESS && event.getAction() != GLFW.GLFW_REPEAT) {
+            return;
+        }
+        int step = Screen.hasShiftDown() ? 5 : 1;
+        switch (event.getKey()) {
+            case GLFW.GLFW_KEY_UP:
+                moveForward(step);
+                break;
+            case GLFW.GLFW_KEY_DOWN:
+                moveForward(-step);
+                break;
+            case GLFW.GLFW_KEY_LEFT:
+                moveSideways(-step);
+                break;
+            case GLFW.GLFW_KEY_RIGHT:
+                moveSideways(step);
+                break;
+            case GLFW.GLFW_KEY_PAGE_UP:
+                translate(1, step);
+                break;
+            case GLFW.GLFW_KEY_PAGE_DOWN:
+                translate(1, -step);
+                break;
+            default:
+                return;
+        }
+        event.setCanceled(true);
+    }
+
+    private static void requestCorner(int corner) {
+        ModNetwork.CHANNEL.sendToServer(new CaptureCommandPacket(corner, ""));
+    }
+
+    private static void requestSave() {
+        Minecraft minecraft = Minecraft.getInstance();
+        if (ClientCaptureBox.bounds() == null) {
+            if (minecraft.player != null) {
+                minecraft.player.displayClientMessage(new TranslationTextComponent(
+                        "buildcapture.capture.status_empty"), false);
+            }
+            return;
+        }
+        SaveSelectionScreen.open();
     }
 
     @SubscribeEvent
@@ -132,28 +271,61 @@ public final class CaptureInteraction {
         Minecraft minecraft = Minecraft.getInstance();
         if (minecraft.player == null || minecraft.level == null || minecraft.screen != null
                 || PlacementPreview.active()
-                || !CaptureKeys.FACE_EDIT.isDown()) {
+                || !CaptureKeys.FACE_EDIT.isDown()
+                || ClientCaptureBox.bounds() == null) {
             return;
         }
         double delta = event.getScrollDelta();
-        Face face = pick();
-        if (face == null || delta == 0.0D) {
-            return;
-        }
-        ClientCaptureBox.Bounds bounds = ClientCaptureBox.bounds();
-        if (bounds == null) {
+        if (delta == 0.0D) {
             return;
         }
         int step = (int) Math.signum(delta) * (Screen.hasShiftDown() ? 5 : 1);
-        // Scrolling up pushes the face outwards.
-        int current = face.side > 0 ? bounds.max[face.axis] : bounds.min[face.axis];
-        moveFace(face.axis, face.side, current + step * face.side);
+        // Same gestures as the placement ghost: the wheel pushes the box away
+        // from the player, Ctrl turns it into the vertical axis. No aiming.
+        if (Screen.hasControlDown()) {
+            translate(1, step);
+        } else {
+            moveForward(step);
+        }
         event.setCanceled(true);
+    }
+
+    /** Moves the whole box along the player's horizontal facing. */
+    private static void moveForward(int blocks) {
+        Minecraft minecraft = Minecraft.getInstance();
+        if (minecraft.player == null) {
+            return;
+        }
+        Direction facing = minecraft.player.getDirection();
+        if (facing.getStepX() != 0) {
+            translate(0, facing.getStepX() * blocks);
+        } else {
+            translate(2, facing.getStepZ() * blocks);
+        }
+    }
+
+    /** Moves the whole box to the player's right, relative to where they look. */
+    private static void moveSideways(int blocks) {
+        Minecraft minecraft = Minecraft.getInstance();
+        if (minecraft.player == null) {
+            return;
+        }
+        Direction facing = minecraft.player.getDirection();
+        if (facing.getStepX() != 0) {
+            translate(2, facing.getStepX() * blocks);
+        } else {
+            translate(0, -facing.getStepZ() * blocks);
+        }
     }
 
     @SubscribeEvent
     public static void onClientTick(TickEvent.ClientTickEvent event) {
-        if (event.phase != TickEvent.Phase.END || !dragging) {
+        if (event.phase == TickEvent.Phase.START) {
+            // A screen closed by a mouse click should not eat the next key press.
+            swallowNextKey = false;
+            return;
+        }
+        if (!dragging) {
             return;
         }
         Minecraft minecraft = Minecraft.getInstance();
@@ -311,6 +483,7 @@ public final class CaptureInteraction {
         } else {
             min[axis] = value;
         }
+        note(axis, side, true);
         submit(min, max, axis, side);
     }
 
@@ -336,6 +509,7 @@ public final class CaptureInteraction {
         }
         min[axis] += delta;
         max[axis] += delta;
+        note(axis, delta, false);
         submit(min, max, axis, 0);
     }
 
