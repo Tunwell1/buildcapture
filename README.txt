@@ -1,0 +1,144 @@
+Build Capture
+=============
+
+A Minecraft Forge mod for 1.16.5 that saves any part of your world as a normal
+datapack structure template. Select two corners, save the box under a name, and
+the result can be placed in-world, loaded by a structure block, or shipped as a
+datapack. The output is vanilla NBT, so the mod is not needed to *use* a
+capture.
+
+Mod id: `buildcapture`.
+
+Requirements
+------------
+- Minecraft 1.16.5
+- Forge 36.2.42 or newer (1.16.x)
+- Java 8 (the game itself); the Gradle build uses a newer JDK
+
+Quick start
+-----------
+1. Aim at a block and run `/capture pos1`.
+2. Aim at the opposite corner and run `/capture pos2`.
+3. Run `/capture save castle/tower` (the name is free-form).
+4. Use it at once with `/capture place castle/tower`, or run `/capture reload`
+   to make the datapack available to structure blocks.
+
+Commands
+--------
+`/capture` requires permission level 2 (operator).
+
+| Command | Description |
+| --- | --- |
+| `/capture pos1` / `pos2` | Set a corner to the targeted block (up to 16 blocks away). |
+| `/capture expand <direction> [blocks]` | Grow the box on one side (default 1). |
+| `/capture shrink <direction> [blocks]` | Shrink it from one side; the box keeps at least one block. |
+| `/capture move <direction> [blocks]` | Move the whole box without changing its size. |
+| `/capture save <name>` | Save the box as a datapack structure. |
+| `/capture place <name> [90\|180\|270]` | Place a capture in front of you. |
+| `/capture list` | List captures from the world and the shared library. |
+| `/capture undo` | Restore or delete your last capture. |
+| `/capture status` | Show both corners, the box size and the library folder. |
+| `/capture clear` | Drop the selection. |
+| `/capture reload` | Rescan and enable the capture datapack. |
+
+Directions are `north`, `south`, `east`, `west`, `up` and `down` (north is -Z).
+The selection is stored as two corners, so `expand`, `shrink` and `move` keep
+corner 1 at the minimum and corner 2 at the maximum of the box. Expanding is
+refused if the result would exceed `capture.maxSize` or leave the build height
+of the current dimension.
+
+Capturing
+---------
+`/capture save` writes to the world's own datapack:
+
+```
+<world>/datapacks/buildcapture_captures/data/<namespace>/structures/<path>.nbt
+```
+
+A name without a namespace gets `buildcapture:` (so `castle/tower` becomes
+`buildcapture:castle/tower`). Reusing an existing id, such as
+`minecraft:village/plains/houses/plains_small_house_1`, overwrites that template
+in the datapack and keeps a backup of the previous file.
+
+Entities and jigsaw blocks are included. A selection containing a structure
+block is refused, so a capture cannot recursively trigger another structure.
+
+The datapack is created on the first save. `/capture place` uses the in-memory
+copy immediately; `/capture reload` (or a restart) enables the datapack for
+structure blocks and vanilla commands.
+
+Interactive editing
+-------------------
+Hold the face-edit key (left Alt by default; rebind it under Controls) and the
+face under the crosshair is highlighted. Then:
+
+- drag the face with the left mouse button to move that side;
+- hold Shift while dragging to move the whole box along that axis;
+- scroll to nudge the face one block, or Shift+scroll for five.
+
+A face you look at straight on is pushed or pulled by looking up or down while
+dragging: pointing at a surface cannot express distance along its normal. The
+highlight and the outline stay visible through terrain, so faces behind walls
+can be grabbed too. Every step is sent to the server, which clamps it to
+`capture.maxSize` and the build height and echoes the result back, so the box
+can never end up invalid or outside the world.
+
+The box can also be edited while standing inside it: the face the crosshair
+leaves through is the one that gets highlighted.
+
+Shared structure library
+------------------------
+Every capture is mirrored into a library outside the world
+(`buildcapture_structures/` in the game directory by default). The library is
+laid out like a datapack, is shared by every world, and can be copied into
+`datapacks` or a mod jar as-is.
+
+- `/capture list` marks library-only entries with `*`.
+- `/capture place` falls back to the library when the world copy is missing.
+- `/capture status` reports the library folder, or that it is disabled.
+- Set `capture.libraryDir` to an absolute path to put it elsewhere, or to an
+  empty string to disable the library.
+
+Backups and undo
+----------------
+Before a capture overwrites an existing structure, the old file is copied to:
+
+```
+<world>/buildcapture_backups/<world|library>/<namespace>/<path>/
+```
+
+The newest 20 backups per structure are kept. `/capture undo` restores the
+world copy and the library copy changed by your last capture; if the capture was
+new, it deletes them instead. The undo history covers the last capture of the
+player who ran the command.
+
+Configuration
+-------------
+`config/buildcapture-common.toml`:
+
+| Option | Default | Meaning |
+| --- | --- | --- |
+| `capture.maxSize` | 64 | Maximum blocks per side (1-256). |
+| `capture.libraryDir` | `buildcapture_structures` | Shared library folder; an empty string disables it. |
+
+Multiplayer
+-----------
+The selection lives on the server, per player, and survives a relog. The
+commands work with only the server mod installed; the client mod adds the box,
+the face highlight and mouse editing. Players without the mod can join a server
+that has it and play normally - they just do not see the selection box.
+
+Building from source
+--------------------
+```
+gradlew.bat build
+```
+
+The release jar is written to `build/libs/buildcapture-1.0.0.jar`. The build
+targets Java 8; set `JAVA_HOME` to a JDK 17 for Gradle itself. The toolchain
+paths can be adjusted in `gradle.properties`.
+
+Credits and license
+-------------------
+Author: Tunwell1. See `CREDITS.txt`. All rights reserved; see `LICENSE.txt`.
+Minecraft is not affiliated with and does not endorse this mod.

@@ -1,0 +1,55 @@
+Build Capture changelog
+=======================
+
+1.0.0 - first public release
+----------------------------
+
+Build Capture is a standalone capture mod. The village decoration features of
+the earlier combined project are not part of this jar and live separately.
+
+Capture
+- New `/capture` command group: select two corners of any build and save it as a
+  datapack structure template, with entities included. The name is free-form
+  (`castle/tower` or an existing id such as
+  `minecraft:village/plains/houses/plains_small_house_1`), so no catalog of
+  known houses is needed.
+- Captures are written to `world/datapacks/buildcapture_captures` and can be
+  used immediately with `/capture place`, or enabled for structure blocks with
+  `/capture reload`.
+- Every overwrite is backed up to
+  `world/buildcapture_backups/<world|library>/<namespace>/<path>/`; `/capture
+  undo` restores the previous version or deletes a newly created capture.
+- `/capture list`, `/capture status`, `/capture clear` and `/capture place` for
+  inspecting, resetting and re-placing the selection. `/capture place` exists
+  because 1.16.5 has no vanilla `/place` command.
+- The capture corners are drawn as a translucent box with a through-terrain
+  outline, synced from the server to the owning client.
+- `/capture expand`, `/capture shrink` and `/capture move` resize one face at a
+  time or move the whole box without reselecting the corners. Directions are
+  `north`/`south`/`east`/`west`/`up`/`down`, the step defaults to 1 block, and
+  the box is kept inside the build height and `capture.maxSize`.
+- Interactive editing: hold the face-edit key (left Alt by default) to highlight
+  the face under the crosshair, drag it with the left mouse button, hold
+  Shift to move the whole box, and scroll for single-block steps. The client
+  sends complete bounds; the server clamps them to the build height and
+  `capture.maxSize` before echoing them back.
+- Faces seen head-on are pushed or pulled by moving the mouse vertically, and
+  the box can be edited from inside.
+- New config option `capture.maxSize` (default 64 blocks per side).
+- New config option `capture.libraryDir`: every capture is also mirrored into a
+  shared library outside the world, usable from every save. `/capture place`
+  falls back to it and `/capture list` marks library-only entries with `*`.
+  Overwritten library entries are backed up like world captures, and
+  `/capture undo` restores both copies. The library folder is a valid datapack,
+  so it can be copied into a world or shipped inside a mod. `/capture status`
+  reports the library folder (or that it is disabled).
+
+Multiplayer
+- Vanilla clients can join a server that only has this mod installed; the mod is
+  server-side, and only the selection box is unavailable to them.
+
+Technical
+- The mod id is `buildcapture`; the package is `com.tunwell.buildcapture`.
+- The selection is server-authoritative: the client only sends bounds, the
+  server clamps them and echoes the result.
+- The output is plain vanilla structure NBT, with no lock-in.

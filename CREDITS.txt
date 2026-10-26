@@ -1,0 +1,21 @@
+Build Capture - credits
+========================
+
+Author
+------
+Tunwell1
+
+Built with
+----------
+- Minecraft, (c) Mojang Studios. Minecraft is not affiliated with and does not
+  endorse this mod.
+- Minecraft Forge and the Forge MDK, (c) the MinecraftForge team. The MDK is
+  licensed under LGPL 2.1 and provided the build setup, mappings configuration
+  and the initial project skeleton.
+- Gradle, ForgeGradle, MCP and the official Mojang mappings, used to build and
+  deobfuscate the project.
+- LWJGL, used by Minecraft for input handling.
+
+The Forge MDK this project started from includes a credits file listing the
+people who built Forge and MCP. Their work is gratefully acknowledged here;
+this file was rewritten to describe the mod's own dependencies.

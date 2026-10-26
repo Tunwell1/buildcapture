@@ -1,0 +1,10 @@
+Build Capture
+Copyright (c) 2026 Tunwell1
+
+All rights reserved.
+
+No permission is granted to copy, modify or redistribute this work, in whole or
+in part, without prior written permission from the copyright holder.
+
+The Gradle build configuration is derived from the MinecraftForge MDK, which is
+licensed under LGPL 2.1; see CREDITS.txt for the full list of dependencies.
