@@ -35,7 +35,6 @@
   "buildcapture.capture.not_found": "Structure %s is not loaded. Capture it first, or run /capture reload.",
   "buildcapture.capture.placed": "Placed %s at X %s, Y %s, Z %s (rotation %s degrees).",
   "buildcapture.capture.invalid_name": "Invalid name. Use lowercase letters, digits, _ - . and /, e.g. castle/tower or minecraft:village/plains/houses/plains_small_house_1.",
-  "buildcapture.capture.too_large": "Selection is too large: %sx%sx%s (max %s blocks per side).",
   "buildcapture.capture.structure_block": "A structure block is inside the selection. Move it outside and try again.",
   "buildcapture.capture.saved": "Saved %s (%sx%sx%s, jigsaws: %s, entities included) to %s",
   "buildcapture.capture.saved_hint": "Check it with /capture place %s; /capture reload or a restart enables the datapack permanently.",

@@ -1,6 +1,19 @@
 Build Capture changelog
 =======================
 
+1.1.6
+-----
+
+Selection
+- Removed the `capture.maxSize` limit. The box can now be as large as the build
+  height allows: wheel resizing, face drags, `/capture expand` and `/capture
+  save` no longer stop at a per-side cap. Existing config files that still
+  contain `maxSize` simply ignore it.
+- Very large captures now load every chunk and fill a template of that size, so
+  they can be heavy on server memory; the box still cannot leave the world or
+  become smaller than one block.
+- Network protocol bumped to 7, so update the client and the server together.
+
 1.1.5
 -----
 

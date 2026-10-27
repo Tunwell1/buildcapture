@@ -35,7 +35,6 @@
   "buildcapture.capture.not_found": "Структура %s не загружена. Сначала сохрани её или выполни /capture reload.",
   "buildcapture.capture.placed": "Поставлено %s: X %s, Y %s, Z %s (поворот %s°).",
   "buildcapture.capture.invalid_name": "Неверное имя. Разрешены строчные латинские буквы, цифры, _ - . и /, например castle/tower или minecraft:village/plains/houses/plains_small_house_1.",
-  "buildcapture.capture.too_large": "Область слишком большая: %sx%sx%s (максимум %s блоков на сторону).",
   "buildcapture.capture.structure_block": "Внутри выделения есть structure block. Вынеси его и попробуй снова.",
   "buildcapture.capture.saved": "Сохранено %s (%sx%sx%s, jigsaw: %s, сущности включены): %s",
   "buildcapture.capture.saved_hint": "Проверь: /capture place %s; /capture reload или перезапуск включают датапак навсегда.",

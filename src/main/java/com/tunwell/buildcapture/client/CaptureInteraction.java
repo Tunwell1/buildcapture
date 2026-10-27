@@ -36,8 +36,8 @@ import javax.annotation.Nullable;
  * which end should grow.</p>
  *
  * <p>The client only ever sends complete bounds. The server clamps them to the
- * build height and {@code capture.maxSize} and sends the result back, so the
- * client never owns the real selection.</p>
+ * build height and sends the result back, so the client never owns the real
+ * selection.</p>
  */
 @OnlyIn(Dist.CLIENT)
 @Mod.EventBusSubscriber(modid = BuildCapture.MOD_ID, value = Dist.CLIENT,
@@ -561,14 +561,6 @@ public final class CaptureInteraction {
             value = Math.max(value, fixed);
         } else {
             value = Math.min(value, fixed);
-        }
-        int limit = ClientCaptureBox.limit();
-        if (limit > 0) {
-            if (side > 0 && value - fixed + 1 > limit) {
-                value = fixed + limit - 1;
-            } else if (side < 0 && fixed - value + 1 > limit) {
-                value = fixed - limit + 1;
-            }
         }
         if (side > 0) {
             max[axis] = value;

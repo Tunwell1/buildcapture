@@ -1,7 +1,6 @@
 package com.tunwell.buildcapture.capture;
 
 import com.tunwell.buildcapture.BuildCapture;
-import com.tunwell.buildcapture.config.BuildCaptureConfig;
 import com.tunwell.buildcapture.template.TemplateExport;
 import net.minecraft.block.Blocks;
 import net.minecraft.entity.player.ServerPlayerEntity;
@@ -38,7 +37,6 @@ public final class CaptureExporter {
 
     public enum Status {
         SAVED,
-        TOO_LARGE,
         STRUCTURE_BLOCK,
         WRITE_FAILED
     }
@@ -129,11 +127,6 @@ public final class CaptureExporter {
                 Math.abs(first.getX() - second.getX()) + 1,
                 Math.abs(first.getY() - second.getY()) + 1,
                 Math.abs(first.getZ() - second.getZ()) + 1);
-
-        int max = BuildCaptureConfig.CAPTURE_MAX_SIZE.get();
-        if (size.getX() > max || size.getY() > max || size.getZ() > max) {
-            return new Result(Status.TOO_LARGE, id, null, null, null, null, false, size, 0);
-        }
 
         ServerWorld world = player.getLevel();
         loadChunks(world, origin, size);

@@ -62,7 +62,7 @@ Commands resize the selection without reselecting the corners:
 
 Directions are `north`, `south`, `east`, `west`, `up` and `down`; the step
 defaults to one block. The box always keeps at least one block and stays inside
-the build height and `capture.maxSize`.
+the build height.
 
 With the client mod installed you can also edit the box directly. Hold the
 face-edit key (left Alt by default; rebindable under Controls) and a small panel
@@ -81,8 +81,8 @@ through terrain if necessary.
 
 When you look at a face almost straight on, the crosshair cannot express depth,
 so the face is pushed or pulled by moving the mouse up and down while dragging.
-Every step is sent to the server, which clamps it to the build height and
-`capture.maxSize`, so the selection cannot end up invalid or outside the world.
+Every step is sent to the server, which clamps it to the build height, so the
+selection cannot end up invalid or outside the world.
 
 The selection is dropped after a successful save, so the box does not stay on
 screen. Set `capture.clearAfterSave` to `false` to keep it for saving the same
@@ -179,7 +179,6 @@ build five blocks.
 
 | Option | Default | Meaning |
 | --- | --- | --- |
-| `capture.maxSize` | 64 | Maximum blocks per side (1–256). |
 | `capture.libraryDir` | `buildcapture_structures` | Shared library folder; empty string disables it. |
 | `capture.clearAfterSave` | `true` | Drop the selection after a successful save. |
 | `capture.importMaxMb` | 16 | Largest `.nbt` file the browser accepts (1–64 MB). |
@@ -201,7 +200,7 @@ normally — they just do not see the box or the browser.
 
 - Minecraft 1.16.5, Forge 36.2.42+.
 - A 1.20.1 version is not available yet.
-- 64 blocks per side by default, up to 256 in the config.
+- The box is limited only by the build height; there is no per-side cap.
 - Imported files are limited to 512 blocks per side and `capture.importMaxMb`.
 - A capture containing a structure block is refused, to avoid recursive
   structure placement.
@@ -215,19 +214,10 @@ mod.
 
 ---
 
-## Screenshots to take (not part of the description)
+## Screenshots (1920×1080, ready)
 
-1. A house wrapped in the translucent box with the through-terrain outline,
-   from an angle that shows two sides.
-2. Holding the face-edit key with one face highlighted orange and the corner
-   panel visible, close enough that the highlight is obvious.
-3. The structure browser: several entries with dimensions and file sizes, one
-   selected, with the Place / Import / Delete row visible.
-4. A placement preview: the green footprint box of a build on the ground, with
-   the chat hint and the player in frame.
-5. Chat after `/capture save` showing "Saved ..." and "Also copied to the shared
-   library", with the box already gone (clear after save).
-6. Optional: the library folder open next to the game, or a structure placed with
-   `/capture place`.
-
-Take them at 1920×1080 or larger; Modrinth prefers 16:9.
+1. `screenshots/01-selection.png` — the translucent box around the winged statue.
+2. `screenshots/02-face-edit.png` — face-edit key held: highlighted face and corner panel.
+3. `screenshots/03-browser.png` — the structure browser with five entries, one selected.
+4. `screenshots/04-preview.png` — placement preview: green footprint box and ghost.
+5. `screenshots/05-placed-result.png` — optional: the placed copy next to the original.

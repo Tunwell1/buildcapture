@@ -45,8 +45,8 @@ Commands
 Directions are `north`, `south`, `east`, `west`, `up` and `down` (north is -Z).
 The selection is stored as two corners, so `expand`, `shrink` and `move` keep
 corner 1 at the minimum and corner 2 at the maximum of the box. Expanding is
-refused if the result would exceed `capture.maxSize` or leave the build height
-of the current dimension.
+refused only if the result would leave the build height of the current
+dimension.
 
 Keys
 ----
@@ -153,9 +153,9 @@ end should grow:
 A face you look at straight on is pushed or pulled by looking up or down while
 dragging: pointing at a surface cannot express distance along its normal. The
 highlight and the outline stay visible through terrain, so faces behind walls
-can be grabbed too. Every step is sent to the server, which clamps it to
-`capture.maxSize` and the build height and echoes the result back, so the box
-can never end up invalid or outside the world.
+can be grabbed too. Every step is sent to the server, which clamps it to the
+build height and echoes the result back, so the box can never end up invalid
+or outside the world.
 
 The box can also be edited while standing inside it: the face the crosshair
 leaves through is the one that gets highlighted.
@@ -192,7 +192,6 @@ Configuration
 
 | Option | Default | Meaning |
 | --- | --- | --- |
-| `capture.maxSize` | 64 | Maximum blocks per side (1-256). |
 | `capture.libraryDir` | `buildcapture_structures` | Shared library folder; an empty string disables it. |
 | `capture.clearAfterSave` | `true` | Drop the selection after a successful save. |
 | `capture.importMaxMb` | 16 | Largest `.nbt` file the browser accepts (1-64 MB). |

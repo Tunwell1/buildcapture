@@ -1,6 +1,5 @@
 package com.tunwell.buildcapture.capture;
 
-import com.tunwell.buildcapture.config.BuildCaptureConfig;
 import net.minecraft.entity.player.ServerPlayerEntity;
 import net.minecraft.util.math.BlockPos;
 
@@ -27,7 +26,6 @@ public final class CaptureBounds {
             return false;
         }
 
-        int limit = BuildCaptureConfig.CAPTURE_MAX_SIZE.get();
         int top = player.getLevel().dimensionType().logicalHeight() - 1;
         int[] min = {
                 Math.min(rawMin.getX(), rawMax.getX()),
@@ -76,25 +74,6 @@ public final class CaptureBounds {
                 } else {
                     min[axis] = max[axis];
                 }
-            }
-            if (max[axis] - min[axis] + 1 > limit) {
-                if (side > 0) {
-                    max[axis] = min[axis] + limit - 1;
-                } else {
-                    min[axis] = max[axis] - limit + 1;
-                }
-            }
-        }
-
-        for (int index = 0; index < 3; index++) {
-            int size = max[index] - min[index] + 1;
-            if (size < 1) {
-                return false;
-            }
-            // The dragged axis has just been clamped; the others were already
-            // valid on the client, so a larger one means a broken client.
-            if ((index != axis || side == 0) && size > limit) {
-                return false;
             }
         }
 

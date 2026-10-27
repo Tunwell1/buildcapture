@@ -11,8 +11,8 @@ import java.util.function.Supplier;
 
 /**
  * Client to server: the selection bounds after one step of an interactive
- * drag. The server clamps both the build height and {@code capture.maxSize}
- * and echoes the result with {@link CaptureBoxPacket}.
+ * drag. The server clamps the vertical extent to the build height and echoes
+ * the result with {@link CaptureBoxPacket}.
  */
 public final class CaptureBoundsPacket {
     private final BlockPos min;

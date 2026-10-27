@@ -7,8 +7,8 @@ import net.minecraftforge.api.distmarker.OnlyIn;
 import javax.annotation.Nullable;
 
 /**
- * The capture corners currently known to the client, plus the server's size
- * limit so an interactive drag can stop at the same boundary as the commands.
+ * The capture corners currently known to the client, used for rendering and
+ * interactive drags.
  */
 @OnlyIn(Dist.CLIENT)
 public final class ClientCaptureBox {
@@ -16,18 +16,16 @@ public final class ClientCaptureBox {
     private static BlockPos first;
     @Nullable
     private static BlockPos second;
-    private static int limit;
 
     private ClientCaptureBox() {
     }
 
-    public static void set(BlockPos first, BlockPos second, int limit) {
+    public static void set(BlockPos first, BlockPos second) {
         ClientCaptureBox.first = first;
         ClientCaptureBox.second = second;
-        ClientCaptureBox.limit = limit;
     }
 
-    /** Replaces the corners but keeps the last known size limit. */
+    /** Replaces the corners. */
     public static void apply(BlockPos first, BlockPos second) {
         ClientCaptureBox.first = first;
         ClientCaptureBox.second = second;
@@ -36,7 +34,6 @@ public final class ClientCaptureBox {
     public static void clear() {
         first = null;
         second = null;
-        limit = 0;
     }
 
     @Nullable
@@ -47,11 +44,6 @@ public final class ClientCaptureBox {
     @Nullable
     public static BlockPos second() {
         return second;
-    }
-
-    /** Maximum blocks per side announced by the server, or 0 when unknown. */
-    public static int limit() {
-        return limit;
     }
 
     /** Normalised min/max corners, or {@code null} when the box is not visible. */

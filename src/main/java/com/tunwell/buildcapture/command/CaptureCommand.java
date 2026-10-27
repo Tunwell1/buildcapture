@@ -286,13 +286,6 @@ public final class CaptureCommand {
             return 0;
         }
 
-        int limit = BuildCaptureConfig.CAPTURE_MAX_SIZE.get();
-        if (mode == Adjust.EXPAND && (sizeX > limit || sizeY > limit || sizeZ > limit)) {
-            source.sendFailure(new TranslationTextComponent(
-                    "buildcapture.capture.too_large", sizeX, sizeY, sizeZ, limit));
-            return 0;
-        }
-
         CaptureSelection.setCorner(player, 1, new BlockPos(minX, minY, minZ));
         CaptureSelection.setCorner(player, 2, new BlockPos(maxX, maxY, maxZ));
         sendBox(player);
@@ -370,12 +363,6 @@ public final class CaptureCommand {
                 }
                 return 1;
             }
-            case TOO_LARGE:
-                source.sendFailure(new TranslationTextComponent(
-                        "buildcapture.capture.too_large",
-                        result.size().getX(), result.size().getY(), result.size().getZ(),
-                        BuildCaptureConfig.CAPTURE_MAX_SIZE.get()));
-                return 0;
             case STRUCTURE_BLOCK:
                 source.sendFailure(new TranslationTextComponent(
                         "buildcapture.capture.structure_block"));
@@ -628,7 +615,7 @@ public final class CaptureCommand {
         BlockPos second = CaptureSelection.corner(player, 2);
         CaptureBoxPacket packet = first == null || second == null
                 ? CaptureBoxPacket.clear()
-                : CaptureBoxPacket.box(first, second, BuildCaptureConfig.CAPTURE_MAX_SIZE.get());
+                : CaptureBoxPacket.box(first, second);
         ModNetwork.CHANNEL.send(PacketDistributor.PLAYER.with(() -> player), packet);
     }
 
