@@ -6,8 +6,8 @@ File to upload
 
 C:\Users\user\Desktop\Projects\BuildCapture\build\libs\buildcapture-1.1.6.jar
 
-Size     185 267 bytes
-SHA-256  9F7910ABB43F73CBF78CCBE281BF9FA86A304F2D8F005D72B0491387FDA78CD6
+Size     185 258 bytes
+SHA-256  F16EC9665FBB42EE10BD155057E4BC9AEFE28A1F86C3B8B5E3312550534B7ECD
 Built    2026-10-27
 
 Minecraft 1.16.5, Forge 36.2.42 or newer, client and server.
