@@ -3,7 +3,7 @@
 ![Minecraft](https://img.shields.io/badge/Minecraft-1.16.5-62B47A?style=flat-square)
 ![Forge](https://img.shields.io/badge/Forge-36.2.42%2B-orange?style=flat-square)
 ![Environment](https://img.shields.io/badge/environment-client%20%2B%20server-4C8DFF?style=flat-square)
-![License](https://img.shields.io/badge/license-All%20Rights%20Reserved-red?style=flat-square)
+![License](https://img.shields.io/badge/license-MIT-green?style=flat-square)
 [![Modrinth](https://img.shields.io/badge/Modrinth-build--capture-00AF5C?style=flat-square&logo=modrinth&logoColor=white)](https://modrinth.com/project/build-capture)
 
 A Minecraft **Forge 1.16.5** mod that saves any part of your world as a normal datapack structure template. Select two corners, save the box under a name, and the result can be placed in-world, loaded by a structure block, or shipped as a datapack. The output is plain vanilla NBT, so the mod is not needed to *use* a capture.
@@ -151,6 +151,6 @@ The jar is written to `build/libs/buildcapture-<version>.jar`. The build targets
 
 ## License
 
-All rights reserved — see [LICENSE.txt](LICENSE.txt) and [CREDITS.txt](CREDITS.txt). Author: Tunwell1. Minecraft is not affiliated with and does not endorse this mod.
+Released under the **MIT License** — see [LICENSE.txt](LICENSE.txt) and [CREDITS.txt](CREDITS.txt). Author: Tunwell1. Minecraft is not affiliated with and does not endorse this mod.
 
 The code, documentation and text were produced in an AI-assisted workflow, then reviewed and play-tested by the author.

@@ -25,7 +25,7 @@ Version         1.1.6
 Loaders         Forge
 Game versions   1.16.5
 Environment     Client and server
-License         All Rights Reserved
+License         MIT
 Mod id          buildcapture
 Categories      Modrinth: Utility, Management
                 CurseForge: Server Utility, Utility & QoL
