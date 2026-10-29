@@ -5,6 +5,7 @@
 ![Environment](https://img.shields.io/badge/environment-client%20%2B%20server-4C8DFF?style=flat-square)
 ![License](https://img.shields.io/badge/license-MIT-green?style=flat-square)
 [![Modrinth](https://img.shields.io/badge/Modrinth-build--capture-00AF5C?style=flat-square&logo=modrinth&logoColor=white)](https://modrinth.com/project/build-capture)
+[![CurseForge](https://img.shields.io/badge/CurseForge-build--capture-F16436?style=flat-square)](https://www.curseforge.com/minecraft/mc-mods/build-capture)
 [![GitHub release](https://img.shields.io/github/v/release/Tunwell1/buildcapture?style=flat-square&logo=github&label=download)](https://github.com/Tunwell1/buildcapture/releases/latest)
 
 A Minecraft **Forge 1.16.5** mod that saves any part of your world as a normal datapack structure template. Select two corners, save the box under a name, and the result can be placed in-world, loaded by a structure block, or shipped as a datapack. The output is plain vanilla NBT, so the mod is not needed to *use* a capture.
@@ -26,7 +27,7 @@ No schematic format, no external editor, no WorldEdit.
 ## Installation
 
 1. Install Forge 1.16.5.
-2. Download the jar from [Releases](https://github.com/Tunwell1/buildcapture/releases/latest) (no need to clone the repository).
+2. Download the jar from [CurseForge](https://www.curseforge.com/minecraft/mc-mods/build-capture/files) or [Releases](https://github.com/Tunwell1/buildcapture/releases/latest) (no need to clone the repository).
 3. Drop `buildcapture-<version>.jar` into the `mods` folder (server, client, or both).
 4. Start the game. `/capture` needs operator (permission level 2).
 
