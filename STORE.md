@@ -15,7 +15,7 @@ released jar.
 | Environment | Client and server |
 | Modrinth categories | Utility, Management |
 | CurseForge categories | Server Utility, Utility & QoL |
-| File | `buildcapture-1.1.7.jar` |
+| File | `buildcapture-1.1.7+mc1.16.5+forge.jar` |
 | Mod id | `buildcapture` |
 
 Short summary (Modrinth / CurseForge "Summary", under 256 characters):

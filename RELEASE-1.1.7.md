@@ -4,16 +4,18 @@ Release checklist - Build Capture 1.1.7
 File to upload
 --------------
 
-C:\Users\user\Desktop\Projects\BuildCapture\build\release\buildcapture-1.1.7+mc1.16.5.jar
+C:\Users\user\Desktop\Projects\BuildCapture\build\release\buildcapture-1.1.7+mc1.16.5+forge.jar
 
 Size     198 354 bytes
 SHA-256  BE30D3E8E00A44066624DD61918910E77248003B14AE0E7770AC60C8E4312C2E
 Built    2026-10-29
 
-The Minecraft version is part of the file name (`+mc1.16.5`) so a jar is
-identifiable outside the store pages. From 1.1.7 onward `build.gradle` puts
-`+mc<mc_version>` in the Gradle version, so `build/libs` produces that name
-directly; release tags follow `v<mod version>+mc<mc version>`.
+The file name carries the game version and loader (`+mc1.16.5+forge`) so a jar
+is identifiable outside the store pages. `build.gradle` puts that suffix in the
+Gradle version, so `build/libs` produces the name by itself. Git tags stay
+`v<mod version>` because published tags are not moved, and CurseForge replaces
+the `+` in an uploaded file name with `-`, so its CDN link reads
+`buildcapture-1.1.7-mc1.16.5.jar` while the display name keeps the `+` form.
 
 Minecraft 1.16.5, Forge 36.2.42 or newer, client and server.
 Network protocol is still 7: no packet layout changed, so 1.1.6 and 1.1.7
@@ -69,7 +71,7 @@ Status
 ------
 
 1. GitHub release v1.1.7 is published with the asset
-   `buildcapture-1.1.7+mc1.16.5.jar`; the download was re-fetched and matched the
+   `buildcapture-1.1.7+mc1.16.5+forge.jar`; the download was re-fetched and matched the
    SHA-256 above.
 2. CurseForge file "Build Capture 1.1.7 for Minecraft 1.16.5" is uploaded (Release,
    Client + Server, Forge, 1.16.5) and waits for processing/approval.
