@@ -4,11 +4,16 @@ Release checklist - Build Capture 1.1.7
 File to upload
 --------------
 
-C:\Users\user\Desktop\Projects\BuildCapture\build\libs\buildcapture-1.1.7.jar
+C:\Users\user\Desktop\Projects\BuildCapture\build\release\buildcapture-1.1.7+mc1.16.5.jar
 
 Size     198 354 bytes
 SHA-256  BE30D3E8E00A44066624DD61918910E77248003B14AE0E7770AC60C8E4312C2E
 Built    2026-10-29
+
+The Minecraft version is part of the file name (`+mc1.16.5`) so a jar is
+identifiable outside the store pages. From 1.1.7 onward `build.gradle` puts
+`+mc<mc_version>` in the Gradle version, so `build/libs` produces that name
+directly; release tags follow `v<mod version>+mc<mc version>`.
 
 Minecraft 1.16.5, Forge 36.2.42 or newer, client and server.
 Network protocol is still 7: no packet layout changed, so 1.1.6 and 1.1.7
@@ -60,20 +65,20 @@ Changelog (version 1.1.7):
 The full text is the 1.1.7 section of changelog.txt if you want the long form.
 
 
-Steps
------
+Status
+------
 
-1. Modrinth: the project still is not public. Submit it for review first if
-   that was not done yet; after approval, dashboard -> "Create a version" ->
-   file buildcapture-1.1.7.jar, version 1.1.7, channel Release, loaders Forge,
-   game version 1.16.5, dependencies none, changelog above. Publish.
-2. CurseForge: author dashboard -> existing project -> "Upload file" with the
-   same jar and changelog, release type Release.
-3. Verify the uploaded file against the SHA-256 above so the two sites hold the
-   same binary. Do not rebuild between the two uploads.
-4. Tag the commit once master is pushed:
-
-       git tag v1.1.7 && git push --tags
+1. GitHub release v1.1.7 is published with the asset
+   `buildcapture-1.1.7+mc1.16.5.jar`; the download was re-fetched and matched the
+   SHA-256 above.
+2. CurseForge file "Build Capture 1.1.7 for Minecraft 1.16.5" is uploaded (Release,
+   Client + Server, Forge, 1.16.5) and waits for processing/approval.
+3. Modrinth still blocks on the project review: the project is private, so no
+   version is published there. Submit it for review, then dashboard ->
+   "Create a version" -> the same jar, version 1.1.7, channel Release, loaders
+   Forge, game version 1.16.5, dependencies none, changelog above.
+4. Building 1.1.7+ from `build/libs` now yields the `+mc1.16.5` name by itself, so
+   step 3 does not need a manual copy; tags follow `v<mod version>+mc<mc version>`.
 
 
 Screenshots
