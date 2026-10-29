@@ -2,27 +2,34 @@ package com.tunwell.buildcapture.capture;
 
 import com.tunwell.buildcapture.BuildCapture;
 import com.tunwell.buildcapture.config.BuildCaptureConfig;
+import com.tunwell.buildcapture.core.StructureNames;
 import com.tunwell.buildcapture.template.TemplateExport;
 import net.minecraft.entity.player.ServerPlayerEntity;
 import net.minecraft.nbt.CompoundNBT;
 import net.minecraft.nbt.CompressedStreamTools;
 import net.minecraft.nbt.ListNBT;
+import net.minecraft.nbt.NBTSizeTracker;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.Util;
+import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.text.TranslationTextComponent;
+import net.minecraft.world.gen.feature.template.Template;
 import net.minecraftforge.event.entity.player.PlayerEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 
 import javax.annotation.Nullable;
+import java.io.BufferedInputStream;
 import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;import java.nio.file.Files;
+import java.io.ByteArrayOutputStream;
+import java.io.DataInputStream;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.HashMap;
-import java.util.Locale;
 import java.util.Map;
 import java.util.UUID;
+import java.util.zip.GZIPInputStream;
 
 /**
  * Receives an .nbt file from the client in chunks, validates it, and writes it
@@ -34,9 +41,14 @@ import java.util.UUID;
 public final class StructureImporter {
     /** Chunk payload size; the serverbound packet limit of 1.16.5 is 32 KiB. */
     public static final int CHUNK_SIZE = 22_000;
-    private static final int MAX_SIDE = 512;
     /** DataVersion of 1.16.5; anything newer may contain unknown blocks. */
     private static final int DATA_VERSION_1_16_5 = 2586;
+    /**
+     * Cap on the decompressed NBT, not the uploaded file: a handful of MB of
+     * gzip can expand to gigabytes, and the vanilla reader checks nothing.
+     */
+    private static final long MAX_NBT_BYTES = 128L * 1024 * 1024;
+    private static final long SESSION_TIMEOUT_MS = 120_000L;
 
     private static final Map<UUID, Session> SESSIONS = new HashMap<>();
 
@@ -63,6 +75,11 @@ public final class StructureImporter {
         if (session == null) {
             return;
         }
+        if (session.expired()) {
+            SESSIONS.remove(player.getUUID());
+            fail(player, "buildcapture.capture.import_timeout");
+            return;
+        }
         if (index != session.index || data.length == 0
                 || session.bytes.size() + data.length > session.total) {
             SESSIONS.remove(player.getUUID());
@@ -78,6 +95,10 @@ public final class StructureImporter {
         if (session == null) {
             return;
         }
+        if (session.expired()) {
+            fail(player, "buildcapture.capture.import_timeout");
+            return;
+        }
         MinecraftServer server = player.getServer();
         if (server == null) {
             return;
@@ -89,8 +110,9 @@ public final class StructureImporter {
         }
 
         CompoundNBT nbt;
-        try {
-            nbt = CompressedStreamTools.readCompressed(new ByteArrayInputStream(data));
+        try (DataInputStream input = new DataInputStream(new BufferedInputStream(
+                new GZIPInputStream(new ByteArrayInputStream(data))))) {
+            nbt = CompressedStreamTools.read(input, new NBTSizeTracker(MAX_NBT_BYTES));
         } catch (Exception exception) {
             fail(player, "buildcapture.capture.import_not_nbt");
             return;
@@ -104,18 +126,35 @@ public final class StructureImporter {
         int x = size.getInt(0);
         int y = size.getInt(1);
         int z = size.getInt(2);
-        if (x < 1 || y < 1 || z < 1 || x > MAX_SIDE || y > MAX_SIDE || z > MAX_SIDE) {
-            fail(player, "buildcapture.capture.import_bad_size", x, y, z, MAX_SIDE);
+        if (x < 1 || y < 1 || z < 1) {
+            fail(player, "buildcapture.capture.import_bad_size", x, y, z);
+            return;
+        }
+
+        // Parse through the same path that placement uses, so a file that would
+        // fail to load is rejected now instead of being written and listed.
+        try {
+            Template template = server.getStructureManager().readStructure(nbt);
+            if (template.getSize().equals(BlockPos.ZERO)) {
+                fail(player, "buildcapture.capture.import_not_nbt");
+                return;
+            }
+        } catch (Exception exception) {
+            fail(player, "buildcapture.capture.import_not_nbt");
             return;
         }
 
         ResourceLocation id = uniqueId(server, session.name);
+        Path worldFile = CaptureExporter.datapackPath(server, id);
+        if (worldFile == null) {
+            fail(player, "buildcapture.capture.import_failed");
+            return;
+        }
         if (!CaptureExporter.writePackMeta(server)) {
             fail(player, "buildcapture.capture.import_failed");
             return;
         }
 
-        Path worldFile = CaptureExporter.datapackPath(server, id);
         CaptureBackups.backup(server, id, worldFile);
         if (!TemplateExport.writeNbt(worldFile, nbt)) {
             fail(player, "buildcapture.capture.import_failed");
@@ -154,12 +193,12 @@ public final class StructureImporter {
         for (int attempt = 1; attempt < 100; attempt++) {
             String path = attempt == 1 ? base : base + "_" + attempt;
             ResourceLocation id = ResourceLocation.tryParse(BuildCapture.MOD_ID + ":" + path);
-            if (id == null) {
+            if (id == null || !CaptureExporter.isSafeId(id)) {
                 continue;
             }
             Path worldFile = CaptureExporter.datapackPath(server, id);
             Path libraryFile = StructureLibrary.path(id);
-            boolean taken = Files.exists(worldFile)
+            boolean taken = (worldFile != null && Files.exists(worldFile))
                     || (libraryFile != null && Files.exists(libraryFile));
             if (!taken) {
                 return id;
@@ -169,26 +208,7 @@ public final class StructureImporter {
     }
 
     private static String sanitize(String rawName) {
-        String name = rawName == null ? "" : rawName.trim().toLowerCase(Locale.ROOT);
-        if (name.endsWith(".nbt")) {
-            name = name.substring(0, name.length() - 4);
-        }
-        StringBuilder builder = new StringBuilder(name.length());
-        for (int index = 0; index < name.length() && builder.length() < 60; index++) {
-            char character = name.charAt(index);
-            boolean valid = character >= 'a' && character <= 'z'
-                    || character >= '0' && character <= '9'
-                    || character == '_' || character == '-' || character == '.'
-                    || character == '/' || character == ' ';
-            builder.append(valid && character != ' ' ? character : '_');
-        }
-        while (builder.length() > 0 && builder.charAt(0) == '_') {
-            builder.deleteCharAt(0);
-        }
-        while (builder.length() > 0 && builder.charAt(builder.length() - 1) == '_') {
-            builder.deleteCharAt(builder.length() - 1);
-        }
-        return builder.toString();
+        return StructureNames.sanitizeFileName(rawName);
     }
 
     private static void fail(ServerPlayerEntity player, String key, Object... arguments) {
@@ -199,11 +219,16 @@ public final class StructureImporter {
         private final String name;
         private final int total;
         private final ByteArrayOutputStream bytes = new ByteArrayOutputStream();
+        private final long startedAt = System.currentTimeMillis();
         private int index;
 
         private Session(String name, int total) {
             this.name = name;
             this.total = total;
+        }
+
+        private boolean expired() {
+            return System.currentTimeMillis() - startedAt > SESSION_TIMEOUT_MS;
         }
     }
 }

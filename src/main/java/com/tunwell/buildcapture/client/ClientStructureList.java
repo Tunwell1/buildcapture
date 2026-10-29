@@ -1,8 +1,12 @@
 package com.tunwell.buildcapture.client;
 
+import com.tunwell.buildcapture.BuildCapture;
 import com.tunwell.buildcapture.capture.StructureCatalog;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
+import net.minecraftforge.client.event.ClientPlayerNetworkEvent;
+import net.minecraftforge.eventbus.api.SubscribeEvent;
+import net.minecraftforge.fml.common.Mod;
 
 import java.util.Collections;
 import java.util.List;
@@ -13,6 +17,8 @@ import java.util.List;
  * screen can be reopened without another round trip.
  */
 @OnlyIn(Dist.CLIENT)
+@Mod.EventBusSubscriber(modid = BuildCapture.MOD_ID, value = Dist.CLIENT,
+        bus = Mod.EventBusSubscriber.Bus.FORGE)
 public final class ClientStructureList {
     private static List<StructureCatalog.Entry> entries = Collections.emptyList();
     private static String libraryPath = "";
@@ -45,5 +51,17 @@ public final class ClientStructureList {
     /** Bumped on every server reply, so the screen knows when to rebuild. */
     public static int version() {
         return version;
+    }
+
+    /**
+     * Drops the last server's list: leaving a server must not leave entries that
+     * the next server never sent (and cannot place or delete).
+     */
+    @SubscribeEvent
+    public static void onDisconnect(ClientPlayerNetworkEvent.LoggedOutEvent event) {
+        entries = Collections.emptyList();
+        libraryPath = "";
+        canUndo = false;
+        version++;
     }
 }

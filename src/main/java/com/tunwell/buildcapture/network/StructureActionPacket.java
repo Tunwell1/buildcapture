@@ -58,11 +58,15 @@ public final class StructureActionPacket {
     }
 
     public static StructureActionPacket decode(PacketBuffer buffer) {
-        Action action = Action.values()[buffer.readByte()];
+        int ordinal = buffer.readUnsignedByte();
         String id = buffer.readUtf(256);
         int rotation = buffer.readVarInt();
         BlockPos pos = buffer.readBlockPos();
-        return new StructureActionPacket(action, id.isEmpty() ? null : id, rotation, pos);
+        if (ordinal >= Action.values().length) {
+            throw new IllegalArgumentException("Unknown structure action: " + ordinal);
+        }
+        return new StructureActionPacket(Action.values()[ordinal], id.isEmpty() ? null : id,
+                rotation, pos);
     }
 
     public void handle(Supplier<NetworkEvent.Context> supplier) {
@@ -83,9 +87,36 @@ public final class StructureActionPacket {
                 case LIST:
                     StructureActions.sendList(player);
                     break;
-                case PLACE:
-                    StructureActions.place(player, parsed, rotation, pos);
+                case PLACE: {
+                    StructureActions.PlaceStatus status =
+                            StructureActions.place(player, parsed, rotation, pos);
+                    switch (status) {
+                        case PLACED:
+                            player.sendMessage(new TranslationTextComponent(
+                                    "buildcapture.capture.placed", String.valueOf(parsed),
+                                    pos.getX(), pos.getY(), pos.getZ(),
+                                    Math.floorMod(rotation, 4) * 90), Util.NIL_UUID);
+                            break;
+                        case NOT_FOUND:
+                            player.sendMessage(new TranslationTextComponent(
+                                    "buildcapture.capture.not_found", String.valueOf(parsed)),
+                                    Util.NIL_UUID);
+                            break;
+                        case TOO_FAR:
+                            player.sendMessage(new TranslationTextComponent(
+                                    "buildcapture.capture.too_far"), Util.NIL_UUID);
+                            break;
+                        case OUT_OF_WORLD:
+                            player.sendMessage(new TranslationTextComponent(
+                                    "buildcapture.capture.out_of_world"), Util.NIL_UUID);
+                            break;
+                        default:
+                            player.sendMessage(new TranslationTextComponent(
+                                    "buildcapture.capture.invalid_name"), Util.NIL_UUID);
+                            break;
+                    }
                     break;
+                }
                 case DELETE:
                     StructureActions.delete(player, parsed);
                     break;

@@ -1,4 +1,4 @@
-# Build Capture - store copy (1.1.6)
+# Build Capture - store copy (1.1.7)
 
 Ready-to-paste text for Modrinth and CurseForge. Keep it in sync with the
 released jar.
@@ -8,14 +8,14 @@ released jar.
 | Field | Value |
 | --- | --- |
 | Name | Build Capture |
-| Version | 1.1.6 |
+| Version | 1.1.7 |
 | Minecraft | 1.16.5 |
 | Loader | Forge 36.2.42 or newer (1.16.x) |
 | License | MIT |
 | Environment | Client and server |
 | Modrinth categories | Utility, Management |
 | CurseForge categories | Server Utility, Utility & QoL |
-| File | `buildcapture-1.1.6.jar` |
+| File | `buildcapture-1.1.7.jar` |
 | Mod id | `buildcapture` |
 
 Short summary (Modrinth / CurseForge "Summary", under 256 characters):
@@ -201,7 +201,9 @@ normally — they just do not see the box or the browser.
 - Minecraft 1.16.5, Forge 36.2.42+.
 - A 1.20.1 version is not available yet.
 - The box is limited only by the build height; there is no per-side cap.
-- Imported files are limited to 512 blocks per side and `capture.importMaxMb`.
+- Imported files are capped by `capture.importMaxMb`; there is no per-side cap.
+  The preview only ghosts structures up to 1024 blocks per axis or 150000
+  blocks; larger ones still place, with just the footprint box shown.
 - A capture containing a structure block is refused, to avoid recursive
   structure placement.
 - `/capture undo` only covers the last save, import or delete of the player who

@@ -5,6 +5,7 @@ import com.tunwell.buildcapture.capture.CaptureBackups;
 import com.tunwell.buildcapture.capture.CaptureExporter;
 import com.tunwell.buildcapture.capture.CaptureSelection;
 import com.tunwell.buildcapture.capture.CaptureUndo;
+import com.tunwell.buildcapture.capture.StructureActions;
 import com.tunwell.buildcapture.capture.StructureLibrary;
 import com.tunwell.buildcapture.config.BuildCaptureConfig;
 import com.tunwell.buildcapture.network.CaptureBoxPacket;
@@ -30,9 +31,6 @@ import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.BlockRayTraceResult;
 import net.minecraft.util.math.RayTraceResult;
 import net.minecraft.util.text.TranslationTextComponent;
-import net.minecraft.world.gen.feature.template.PlacementSettings;
-import net.minecraft.world.gen.feature.template.Template;
-import net.minecraft.world.server.ServerWorld;
 import net.minecraft.world.storage.FolderName;
 import net.minecraftforge.event.RegisterCommandsEvent;
 import net.minecraftforge.event.entity.player.PlayerEvent;
@@ -94,7 +92,11 @@ public final class CaptureCommand {
     @SubscribeEvent
     public static void onPlayerChangedDimension(PlayerEvent.PlayerChangedDimensionEvent event) {
         if (event.getPlayer() instanceof ServerPlayerEntity) {
-            resendBoxLater((ServerPlayerEntity) event.getPlayer());
+            // A selection is a set of coordinates in one dimension; keeping it
+            // after a portal trip would save the wrong place in the new world.
+            ServerPlayerEntity player = (ServerPlayerEntity) event.getPlayer();
+            CaptureSelection.clear(player);
+            sendBox(player);
         }
     }
 
@@ -140,6 +142,10 @@ public final class CaptureCommand {
 
     private static int openGui(CommandSource source) throws CommandSyntaxException {
         ServerPlayerEntity player = source.getPlayerOrException();
+        if (!ModNetwork.CHANNEL.isRemotePresent(player.connection.connection)) {
+            source.sendFailure(Messages.forSource(source, "buildcapture.capture.gui_needs_mod"));
+            return 0;
+        }
         ModNetwork.CHANNEL.send(PacketDistributor.PLAYER.with(() -> player), new OpenGuiPacket());
         return 1;
     }
@@ -174,13 +180,13 @@ public final class CaptureCommand {
         ServerPlayerEntity player = source.getPlayerOrException();
         BlockPos pos = targetedBlock(player);
         if (pos == null) {
-            source.sendFailure(new TranslationTextComponent(
+            source.sendFailure(Messages.forSource(source, 
                     "buildcapture.capture.aim_at_block"));
             return 0;
         }
         CaptureSelection.setCorner(player, corner, pos);
         sendBox(player);
-        source.sendSuccess(new TranslationTextComponent(
+        source.sendSuccess(Messages.forSource(source, 
                 corner == 1 ? "buildcapture.capture.pos1" : "buildcapture.capture.pos2",
                 pos.getX(), pos.getY(), pos.getZ()), false);
         return 1;
@@ -209,7 +215,7 @@ public final class CaptureCommand {
         BlockPos first = CaptureSelection.corner(player, 1);
         BlockPos second = CaptureSelection.corner(player, 2);
         if (first == null || second == null) {
-            source.sendFailure(new TranslationTextComponent("buildcapture.capture.no_selection"));
+            source.sendFailure(Messages.forSource(source, "buildcapture.capture.no_selection"));
             return 0;
         }
 
@@ -271,7 +277,7 @@ public final class CaptureCommand {
         minY = Math.max(0, minY);
         maxY = Math.min(top, maxY);
         if (maxY - minY + 1 < wantedY) {
-            source.sendFailure(new TranslationTextComponent(
+            source.sendFailure(Messages.forSource(source, 
                     "buildcapture.capture.out_of_bounds", top));
             return 0;
         }
@@ -280,7 +286,7 @@ public final class CaptureCommand {
         int sizeY = maxY - minY + 1;
         int sizeZ = maxZ - minZ + 1;
         if (sizeX < 1 || sizeY < 1 || sizeZ < 1) {
-            source.sendFailure(new TranslationTextComponent(
+            source.sendFailure(Messages.forSource(source, 
                     "buildcapture.capture.too_small", blocks,
                     directionText(direction)));
             return 0;
@@ -293,7 +299,7 @@ public final class CaptureCommand {
         String key = mode == Adjust.EXPAND ? "buildcapture.capture.expanded"
                 : mode == Adjust.SHRINK ? "buildcapture.capture.shrunk"
                         : "buildcapture.capture.moved";
-        source.sendSuccess(new TranslationTextComponent(key, blocks,
+        source.sendSuccess(Messages.forSource(source, key, blocks,
                 directionText(direction), sizeX, sizeY, sizeZ), false);
         return 1;
     }
@@ -326,14 +332,14 @@ public final class CaptureCommand {
         ServerPlayerEntity player = source.getPlayerOrException();
         ResourceLocation id = parseId(rawName);
         if (id == null) {
-            source.sendFailure(new TranslationTextComponent("buildcapture.capture.invalid_name"));
+            source.sendFailure(Messages.forSource(source, "buildcapture.capture.invalid_name"));
             return 0;
         }
 
         BlockPos first = CaptureSelection.corner(player, 1);
         BlockPos second = CaptureSelection.corner(player, 2);
         if (first == null || second == null) {
-            source.sendFailure(new TranslationTextComponent("buildcapture.capture.no_selection"));
+            source.sendFailure(Messages.forSource(source, "buildcapture.capture.no_selection"));
             return 0;
         }
 
@@ -343,19 +349,19 @@ public final class CaptureCommand {
                 CaptureSelection.remember(player, id, result.file(), result.backup(),
                         result.libraryFile(), result.libraryBackup());
                 BlockPos size = result.size();
-                source.sendSuccess(new TranslationTextComponent(
+                source.sendSuccess(Messages.forSource(source, 
                         "buildcapture.capture.saved", id.toString(),
                         size.getX(), size.getY(), size.getZ(), result.jigsaws(),
                         relative(source.getServer(), result.file())), false);
                 if (result.libraryFile() != null) {
-                    source.sendSuccess(new TranslationTextComponent(
+                    source.sendSuccess(Messages.forSource(source, 
                             "buildcapture.capture.library_saved",
                             StructureLibrary.describe(result.libraryFile())), false);
                 } else if (result.libraryFailed()) {
-                    source.sendSuccess(new TranslationTextComponent(
+                    source.sendSuccess(Messages.forSource(source, 
                             "buildcapture.capture.library_failed"), false);
                 }
-                source.sendSuccess(new TranslationTextComponent(
+                source.sendSuccess(Messages.forSource(source, 
                         "buildcapture.capture.saved_hint", id.toString()), false);
                 if (BuildCaptureConfig.CAPTURE_CLEAR_AFTER_SAVE.get()) {
                     CaptureSelection.clear(player);
@@ -364,11 +370,11 @@ public final class CaptureCommand {
                 return 1;
             }
             case STRUCTURE_BLOCK:
-                source.sendFailure(new TranslationTextComponent(
+                source.sendFailure(Messages.forSource(source, 
                         "buildcapture.capture.structure_block"));
                 return 0;
             default:
-                source.sendFailure(new TranslationTextComponent(
+                source.sendFailure(Messages.forSource(source, 
                         "buildcapture.capture.failed", id.toString()));
                 return 0;
         }
@@ -379,31 +385,35 @@ public final class CaptureCommand {
         ServerPlayerEntity player = source.getPlayerOrException();
         ResourceLocation id = parseId(rawName);
         if (id == null) {
-            source.sendFailure(new TranslationTextComponent("buildcapture.capture.invalid_name"));
+            source.sendFailure(Messages.forSource(source, "buildcapture.capture.invalid_name"));
             return 0;
         }
 
-        Template template = TemplateExport.load(source.getServer(), id);
-        if (template == null || template.getSize().equals(BlockPos.ZERO)) {
-            template = StructureLibrary.load(source.getServer(), id);
-        }
-        if (template == null || template.getSize().equals(BlockPos.ZERO)) {
-            source.sendFailure(new TranslationTextComponent(
-                    "buildcapture.capture.not_found", id.toString()));
-            return 0;
-        }
-
-        ServerWorld world = source.getLevel();
         BlockPos origin = player.blockPosition().relative(player.getDirection(), 2).below();
-        PlacementSettings settings = new PlacementSettings()
-                .setRotation(rotation)
-                .setIgnoreEntities(false)
-                .setKnownShape(true);
-        template.placeInWorld(world, origin, settings, world.random);
-        source.sendSuccess(new TranslationTextComponent(
-                "buildcapture.capture.placed", id.toString(),
-                origin.getX(), origin.getY(), origin.getZ(), degrees(rotation)), false);
-        return 1;
+        int steps = rotationSteps(rotation);
+        switch (StructureActions.place(player, id, steps, origin)) {
+            case PLACED:
+                source.sendSuccess(Messages.forSource(source, 
+                        "buildcapture.capture.placed", id.toString(),
+                        origin.getX(), origin.getY(), origin.getZ(), steps * 90), false);
+                return 1;
+            case NOT_FOUND:
+                source.sendFailure(Messages.forSource(source, 
+                        "buildcapture.capture.not_found", id.toString()));
+                return 0;
+            case TOO_FAR:
+                source.sendFailure(Messages.forSource(source, 
+                        "buildcapture.capture.too_far"));
+                return 0;
+            case OUT_OF_WORLD:
+                source.sendFailure(Messages.forSource(source, 
+                        "buildcapture.capture.out_of_world"));
+                return 0;
+            default:
+                source.sendFailure(Messages.forSource(source, 
+                        "buildcapture.capture.invalid_name"));
+                return 0;
+        }
     }
 
     private static LiteralArgumentBuilder<CommandSource> rotationNode(
@@ -412,14 +422,14 @@ public final class CaptureCommand {
                 context.getSource(), StringArgumentType.getString(context, "name"), rotation));
     }
 
-    private static int degrees(Rotation rotation) {
+    private static int rotationSteps(Rotation rotation) {
         switch (rotation) {
             case CLOCKWISE_90:
-                return 90;
+                return 1;
             case CLOCKWISE_180:
-                return 180;
+                return 2;
             case COUNTERCLOCKWISE_90:
-                return 270;
+                return 3;
             default:
                 return 0;
         }
@@ -433,7 +443,7 @@ public final class CaptureCommand {
         Set<String> all = new TreeSet<>(worldIds);
         all.addAll(libraryIds);
         if (all.isEmpty()) {
-            source.sendSuccess(new TranslationTextComponent(
+            source.sendSuccess(Messages.forSource(source, 
                     "buildcapture.capture.list_empty"), false);
             return 0;
         }
@@ -449,10 +459,10 @@ public final class CaptureCommand {
                 fromLibrary = true;
             }
         }
-        source.sendSuccess(new TranslationTextComponent(
+        source.sendSuccess(Messages.forSource(source, 
                 "buildcapture.capture.list", ids.size(), String.join(", ", shown)), false);
         if (fromLibrary) {
-            source.sendSuccess(new TranslationTextComponent(
+            source.sendSuccess(Messages.forSource(source, 
                     "buildcapture.capture.list_hint"), false);
         }
         return ids.size();
@@ -467,7 +477,7 @@ public final class CaptureCommand {
             stream.filter(Files::isRegularFile)
                     .filter(path -> path.getFileName().toString().endsWith(".nbt"))
                     .forEach(path -> {
-                        String id = toId(data, path);
+                        String id = StructureLibrary.toId(data, path);
                         if (id != null) {
                             ids.add(id);
                         }
@@ -482,17 +492,17 @@ public final class CaptureCommand {
         ServerPlayerEntity player = source.getPlayerOrException();
         CaptureUndo.Result result = CaptureUndo.undo(player);
         if (result.status() == CaptureUndo.Status.NOTHING) {
-            source.sendFailure(new TranslationTextComponent(
+            source.sendFailure(Messages.forSource(source, 
                     "buildcapture.capture.nothing_to_undo"));
             return 0;
         }
         if (result.status() == CaptureUndo.Status.FAILED) {
-            source.sendFailure(new TranslationTextComponent(
+            source.sendFailure(Messages.forSource(source, 
                     "buildcapture.capture.undo_failed", result.id()));
             return 0;
         }
         boolean restored = result.status() == CaptureUndo.Status.RESTORED;
-        source.sendSuccess(new TranslationTextComponent(
+        source.sendSuccess(Messages.forSource(source, 
                 restored ? "buildcapture.capture.undo_restored"
                         : "buildcapture.capture.undo_removed",
                 result.id()), false);
@@ -503,7 +513,7 @@ public final class CaptureCommand {
         ServerPlayerEntity player = source.getPlayerOrException();
         CaptureSelection.clear(player);
         sendBox(player);
-        source.sendSuccess(new TranslationTextComponent(
+        source.sendSuccess(Messages.forSource(source, 
                 "buildcapture.capture.cleared"), false);
         return 1;
     }
@@ -514,7 +524,7 @@ public final class CaptureCommand {
         BlockPos second = CaptureSelection.corner(player, 2);
         sendBox(player);
         if (first == null && second == null) {
-            source.sendSuccess(new TranslationTextComponent(
+            source.sendSuccess(Messages.forSource(source, 
                     "buildcapture.capture.status_empty"), false);
             return 0;
         }
@@ -526,19 +536,19 @@ public final class CaptureCommand {
                 : (Math.abs(first.getX() - second.getX()) + 1) + "x"
                         + (Math.abs(first.getY() - second.getY()) + 1) + "x"
                         + (Math.abs(first.getZ() - second.getZ()) + 1);
-        source.sendSuccess(new TranslationTextComponent(
+        source.sendSuccess(Messages.forSource(source, 
                 "buildcapture.capture.status", left, right, size), false);
         Path library = StructureLibrary.root();
         if (library == null) {
-            source.sendSuccess(new TranslationTextComponent(
+            source.sendSuccess(Messages.forSource(source, 
                     "buildcapture.capture.library_disabled"), false);
         } else {
-            source.sendSuccess(new TranslationTextComponent(
+            source.sendSuccess(Messages.forSource(source, 
                     "buildcapture.capture.library_status",
                     StructureLibrary.describe(library)), false);
         }
         if (first != null && second != null) {
-            source.sendSuccess(new TranslationTextComponent(
+            source.sendSuccess(Messages.forSource(source, 
                     "buildcapture.capture.drag_hint"), false);
         }
         return 1;
@@ -555,7 +565,8 @@ public final class CaptureCommand {
             selected.add(packId);
         }
         server.reloadResources(selected);
-        source.sendSuccess(new TranslationTextComponent(
+        TemplateExport.clearCache();
+        source.sendSuccess(Messages.forSource(source, 
                 "buildcapture.capture.reloaded", packId), false);
         return 1;
     }
@@ -573,28 +584,7 @@ public final class CaptureCommand {
         }
         // ResourceLocation allows dots and slashes, so reject traversal segments
         // before the path is used to build a file location.
-        for (String segment : id.getPath().split("/")) {
-            if (segment.isEmpty() || ".".equals(segment) || "..".equals(segment)) {
-                return null;
-            }
-        }
-        return id;
-    }
-
-    @Nullable
-    private static String toId(Path root, Path file) {
-        String relative = root.relativize(file).toString().replace('\\', '/');
-        int slash = relative.indexOf('/');
-        if (slash <= 0) {
-            return null;
-        }
-        String namespace = relative.substring(0, slash);
-        String rest = relative.substring(slash + 1);
-        String prefix = "structures/";
-        if (!rest.startsWith(prefix) || !rest.endsWith(".nbt")) {
-            return null;
-        }
-        return namespace + ":" + rest.substring(prefix.length(), rest.length() - 4);
+        return CaptureExporter.isSafeId(id) ? id : null;
     }
 
     private static String relative(MinecraftServer server, Path path) {
@@ -611,6 +601,11 @@ public final class CaptureCommand {
 
     /** Keeps the client-side outline in sync with the server's selection. */
     public static void sendBox(ServerPlayerEntity player) {
+        // A client without the mod accepts the connection but has no channel to
+        // read this packet on; skip it instead of sending an unknown payload.
+        if (!ModNetwork.CHANNEL.isRemotePresent(player.connection.connection)) {
+            return;
+        }
         BlockPos first = CaptureSelection.corner(player, 1);
         BlockPos second = CaptureSelection.corner(player, 2);
         CaptureBoxPacket packet = first == null || second == null

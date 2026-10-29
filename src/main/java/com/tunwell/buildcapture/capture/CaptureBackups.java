@@ -1,6 +1,7 @@
 package com.tunwell.buildcapture.capture;
 
 import com.tunwell.buildcapture.BuildCapture;
+import com.tunwell.buildcapture.core.BackupRetention;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.world.storage.FolderName;
@@ -94,13 +95,9 @@ public final class CaptureBackups {
         } catch (IOException exception) {
             return;
         }
-        if (files.size() <= KEEP) {
-            return;
-        }
-        files.sort(Comparator.comparing(path -> path.getFileName().toString()));
-        for (int index = 0; index < files.size() - KEEP; index++) {
+        for (Path stale : BackupRetention.stale(files, KEEP)) {
             try {
-                Files.deleteIfExists(files.get(index));
+                Files.deleteIfExists(stale);
             } catch (IOException ignored) {
                 // A leftover backup is harmless; try again next time.
             }

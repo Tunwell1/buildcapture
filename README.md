@@ -137,7 +137,7 @@ There is no per-side cap on the selection: the box is limited only by the build 
 
 ## Multiplayer and permissions
 
-The selection lives on the server, per player, and survives a relog. The commands work with only the server mod installed; the client mod adds the box, the face highlight, mouse editing, the structure browser and the placement preview. The ghost block list is sent by the server when the preview starts, so it works on multiplayer servers too. The client and the server must run the same mod version — they compare the network protocol on join — but a vanilla client can still join and play; it just does not see the box or the ghost.
+The selection lives on the server, per player, and survives a relog; changing dimension clears it, because the corners belong to one world. The commands work with only the server mod installed; the client mod adds the box, the face highlight, mouse editing, the structure browser and the placement preview. The ghost block list is sent by the server when the preview starts, so it works on multiplayer servers too. The client and the server must run the same mod version — they compare the network protocol on join — but a client without the mod (vanilla or Forge) can still join and play; it just does not see the box or the ghost.
 
 <p align="center">
   <img src="screenshots/05-placed-result.png" width="72%" alt="A placed copy next to the original">
@@ -150,6 +150,15 @@ gradlew.bat build
 ```
 
 The jar is written to `build/libs/buildcapture-<version>.jar`. The build targets Java 8; set `JAVA_HOME` to a JDK 17 for Gradle itself (a JDK 8 is detected automatically). If yours is not, put `org.gradle.java.installations.paths=<jdk8>,<jdk17>` in `~/.gradle/gradle.properties` instead of editing the project's file.
+
+Checks:
+
+```
+gradlew.bat test                 # unit tests for the Minecraft-free core
+scripts/smoke-server.sh          # boots a dedicated dev server, fails on errors
+```
+
+The pure rules live in the `core` package with no Minecraft imports — structure names and paths, ghost-position packing, backup retention — so they are covered by unit tests and can be reused unchanged by a port to another Minecraft version. `scripts/smoke-server.sh` needs a Git Bash shell on Windows.
 
 ## License
 

@@ -96,10 +96,13 @@
   "buildcapture.capture.import_too_large": "The file is too large. The limit is %s MB.",
   "buildcapture.capture.import_not_nbt": "That is not a .nbt structure file.",
   "buildcapture.capture.import_failed": "The upload failed. Try again.",
-  "buildcapture.capture.import_bad_size": "Invalid structure size %sx%sx%s (limit %s per side).",
+  "buildcapture.capture.import_timeout": "The upload timed out. Pick the file again.",
+  "buildcapture.capture.import_bad_size": "Invalid structure size %sx%sx%s.",
   "buildcapture.capture.import_read_failed": "Could not read %s.",
   "buildcapture.capture.deleted": "Deleted %s (a backup was kept).",
+  "buildcapture.capture.backup_failed": "Could not back up %s, so nothing was changed.",
   "buildcapture.capture.too_far": "That spot is too far away.",
   "buildcapture.capture.out_of_world": "The structure does not fit inside the build height there.",
-  "buildcapture.capture.need_op": "Build Capture needs operator permissions (level 2)."
+  "buildcapture.capture.need_op": "Build Capture needs operator permissions (level 2).",
+  "buildcapture.capture.gui_needs_mod": "The in-game browser needs the Build Capture client mod; the commands work without it."
 }

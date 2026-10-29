@@ -2,6 +2,8 @@ package com.tunwell.buildcapture.capture;
 
 import com.tunwell.buildcapture.BuildCapture;
 import com.tunwell.buildcapture.config.BuildCaptureConfig;
+import com.tunwell.buildcapture.core.PathSecurity;
+import com.tunwell.buildcapture.core.StructureNames;
 import com.tunwell.buildcapture.template.TemplateExport;
 import net.minecraft.nbt.CompoundNBT;
 import net.minecraft.nbt.CompressedStreamTools;
@@ -69,9 +71,8 @@ public final class StructureLibrary {
         Path file = root.resolve("data")
                 .resolve(id.getNamespace())
                 .resolve("structures")
-                .resolve(id.getPath() + ".nbt")
-                .normalize();
-        return file.startsWith(root) ? file : null;
+                .resolve(id.getPath() + ".nbt");
+        return PathSecurity.inside(root, file);
     }
 
     /** Mirrors one structure into the library; returns the written file. */
@@ -181,19 +182,14 @@ public final class StructureLibrary {
         }
     }
 
+    /**
+     * Maps {@code <data>/<namespace>/structures/<path>.nbt} back to
+     * {@code namespace:path}. Shared by the library, the world datapack and the
+     * browser, which all lay their files out this way.
+     */
     @Nullable
-    private static String toId(Path data, Path file) {
-        String relative = data.relativize(file).toString().replace('\\', '/');
-        int slash = relative.indexOf('/');
-        if (slash <= 0) {
-            return null;
-        }
-        String namespace = relative.substring(0, slash);
-        String rest = relative.substring(slash + 1);
-        String prefix = "structures/";
-        if (!rest.startsWith(prefix) || !rest.endsWith(".nbt")) {
-            return null;
-        }
-        return namespace + ":" + rest.substring(prefix.length(), rest.length() - 4);
+    public static String toId(Path data, Path file) {
+        return StructureNames.idFromRelative(
+                data.relativize(file).toString().replace('\\', '/'));
     }
 }

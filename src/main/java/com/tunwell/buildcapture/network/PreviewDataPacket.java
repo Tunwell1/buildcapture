@@ -1,5 +1,6 @@
 package com.tunwell.buildcapture.network;
 
+import com.tunwell.buildcapture.core.PreviewPacking;
 import net.minecraft.block.BlockState;
 import net.minecraft.nbt.NBTUtil;
 import net.minecraft.network.PacketBuffer;
@@ -11,13 +12,12 @@ import java.util.function.Supplier;
 
 /**
  * Block list of one structure for the placement ghost. Positions are packed
- * into 10 bits per axis, which covers the 512-block import limit. When the
- * structure is too large to ghost, {@code limited} is set and the palette and
- * block list are empty; the client then keeps the plain footprint box.
+ * into 10 bits per axis, so the server only ghosts structures up to 1024 blocks
+ * per axis. When the structure is too large to ghost, {@code limited} is set
+ * and the palette and block list are empty; the client then keeps the plain
+ * footprint box.
  */
 public final class PreviewDataPacket {
-    private static final int AXIS_BITS = 10;
-    private static final int AXIS_MASK = (1 << AXIS_BITS) - 1;
     /** Defensive limits for a client decoding a reply; they mirror the server caps. */
     private static final int MAX_PALETTE = 2_048;
     private static final int MAX_BLOCKS = 150_000;
@@ -62,9 +62,9 @@ public final class PreviewDataPacket {
         buffer.writeVarInt(message.positions.length);
         for (int index = 0; index < message.positions.length; index++) {
             int packed = message.positions[index];
-            buffer.writeVarInt(packed & AXIS_MASK);
-            buffer.writeVarInt((packed >> AXIS_BITS) & AXIS_MASK);
-            buffer.writeVarInt((packed >> (AXIS_BITS * 2)) & AXIS_MASK);
+            buffer.writeVarInt(PreviewPacking.x(packed));
+            buffer.writeVarInt(PreviewPacking.y(packed));
+            buffer.writeVarInt(PreviewPacking.z(packed));
             buffer.writeVarInt(message.indexes[index]);
         }
     }
@@ -96,16 +96,11 @@ public final class PreviewDataPacket {
             int x = buffer.readVarInt();
             int y = buffer.readVarInt();
             int z = buffer.readVarInt();
-            positions[index] = pack(x, y, z);
+            positions[index] = PreviewPacking.pack(x, y, z);
             indexes[index] = buffer.readVarInt();
         }
         return new PreviewDataPacket(id, sizeX, sizeY, sizeZ, total, limited,
                 palette, positions, indexes);
-    }
-
-    public static int pack(int x, int y, int z) {
-        return (x & AXIS_MASK) | ((y & AXIS_MASK) << AXIS_BITS)
-                | ((z & AXIS_MASK) << (AXIS_BITS * 2));
     }
 
     public void handle(Supplier<NetworkEvent.Context> supplier) {

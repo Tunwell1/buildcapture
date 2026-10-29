@@ -96,10 +96,13 @@
   "buildcapture.capture.import_too_large": "Файл слишком большой. Лимит — %s МБ.",
   "buildcapture.capture.import_not_nbt": "Это не файл структуры .nbt.",
   "buildcapture.capture.import_failed": "Загрузка не удалась. Попробуй ещё раз.",
-  "buildcapture.capture.import_bad_size": "Недопустимый размер структуры %sx%sx%s (лимит %s на сторону).",
+  "buildcapture.capture.import_timeout": "Загрузка прервалась по таймауту. Выбери файл заново.",
+  "buildcapture.capture.import_bad_size": "Недопустимый размер структуры %sx%sx%s.",
   "buildcapture.capture.import_read_failed": "Не удалось прочитать %s.",
   "buildcapture.capture.deleted": "Удалено %s (резервная копия сохранена).",
+  "buildcapture.capture.backup_failed": "Не удалось сделать резервную копию %s, поэтому ничего не изменено.",
   "buildcapture.capture.too_far": "Это место слишком далеко.",
   "buildcapture.capture.out_of_world": "Структура не помещается в высоту мира.",
-  "buildcapture.capture.need_op": "Build Capture требует прав оператора (уровень 2)."
+  "buildcapture.capture.need_op": "Build Capture требует прав оператора (уровень 2).",
+  "buildcapture.capture.gui_needs_mod": "Для браузера структур нужен клиентский мод Build Capture; команды работают и без него."
 }

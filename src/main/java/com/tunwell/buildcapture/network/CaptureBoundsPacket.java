@@ -4,7 +4,9 @@ import com.tunwell.buildcapture.capture.CaptureBounds;
 import com.tunwell.buildcapture.command.CaptureCommand;
 import net.minecraft.entity.player.ServerPlayerEntity;
 import net.minecraft.network.PacketBuffer;
+import net.minecraft.util.Util;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.text.TranslationTextComponent;
 import net.minecraftforge.fml.network.NetworkEvent;
 
 import java.util.function.Supplier;
@@ -44,6 +46,11 @@ public final class CaptureBoundsPacket {
         ServerPlayerEntity player = context.getSender();
         if (player != null) {
             context.enqueueWork(() -> {
+                if (!player.hasPermissions(2)) {
+                    player.sendMessage(new TranslationTextComponent(
+                            "buildcapture.capture.need_op"), Util.NIL_UUID);
+                    return;
+                }
                 CaptureBounds.apply(player, this.min, this.max, this.axis, this.side);
                 // Always echo the authoritative box so the client snaps back if
                 // the server clamped or rejected the step.

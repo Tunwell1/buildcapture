@@ -24,6 +24,7 @@ import org.lwjgl.opengl.GL11;
 import javax.annotation.Nullable;
 import java.io.File;
 import java.nio.file.Files;
+import java.nio.file.InvalidPathException;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
@@ -171,8 +172,19 @@ public final class CaptureScreen extends Screen {
         placeButton.active = entry != null && entry.size().getX() > 0;
         deleteButton.active = entry != null;
         undoButton.active = ClientStructureList.canUndo();
-        folderButton.active = !ClientStructureList.libraryPath().isEmpty()
-                && Files.isDirectory(Paths.get(ClientStructureList.libraryPath()));
+        folderButton.active = isLibraryDirectory(ClientStructureList.libraryPath());
+    }
+
+    private static boolean isLibraryDirectory(String path) {
+        if (path.isEmpty()) {
+            return false;
+        }
+        try {
+            return Files.isDirectory(Paths.get(path));
+        } catch (InvalidPathException exception) {
+            // A server on another OS can send a path this client cannot parse.
+            return false;
+        }
     }
 
     private void rebuild() {

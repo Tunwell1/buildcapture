@@ -29,7 +29,8 @@ import java.time.format.DateTimeFormatter;
  */
 @OnlyIn(Dist.CLIENT)
 public final class SaveSelectionScreen extends Screen {
-    private static final DateTimeFormatter STAMP = DateTimeFormatter.ofPattern("yyyy_MM_dd_HHmm");
+    private static final DateTimeFormatter STAMP =
+            DateTimeFormatter.ofPattern("yyyy_MM_dd_HHmmss");
     private static final int PANEL_WIDTH = 260;
     private static final int PANEL_HEIGHT = 108;
     private static final int BG = 0xF00E0E0E;

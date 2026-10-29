@@ -1,6 +1,8 @@
 package com.tunwell.buildcapture.capture;
 
 import com.tunwell.buildcapture.BuildCapture;
+import com.tunwell.buildcapture.core.PathSecurity;
+import com.tunwell.buildcapture.core.StructureNames;
 import com.tunwell.buildcapture.template.TemplateExport;
 import net.minecraft.block.Blocks;
 import net.minecraft.entity.player.ServerPlayerEntity;
@@ -147,7 +149,15 @@ public final class CaptureExporter {
         }
 
         Path file = datapackPath(server, id);
+        if (file == null) {
+            return new Result(Status.WRITE_FAILED, id, null, null, null, null, false, size, jigsaws);
+        }
+        boolean overwriting = Files.exists(file);
         Path backup = CaptureBackups.backup(server, id, file);
+        if (overwriting && backup == null) {
+            // Never replace a capture that could not be backed up first.
+            return new Result(Status.WRITE_FAILED, id, file, null, null, null, false, size, jigsaws);
+        }
         if (!TemplateExport.writeNbt(file, nbt)) {
             return new Result(Status.WRITE_FAILED, id, file, backup, null, null, false, size, jigsaws);
         }
@@ -183,12 +193,26 @@ public final class CaptureExporter {
         return server.getWorldPath(FolderName.DATAPACK_DIR).resolve(DATAPACK_NAME);
     }
 
+    /**
+     * File for a structure inside the world datapack, or {@code null} when the id
+     * must not be turned into a path: 1.16.5's ResourceLocation accepts {@code .}
+     * and {@code ..} segments, which would escape the structures folder.
+     */
+    @Nullable
     public static Path datapackPath(MinecraftServer server, ResourceLocation id) {
-        return datapackDir(server)
-                .resolve("data")
-                .resolve(id.getNamespace())
+        if (!isSafeId(id)) {
+            return null;
+        }
+        Path data = datapackDir(server).resolve("data");
+        Path file = data.resolve(id.getNamespace())
                 .resolve("structures")
                 .resolve(id.getPath() + ".nbt");
+        return PathSecurity.inside(data, file);
+    }
+
+    /** Whether every segment of the id names an ordinary folder or file. */
+    public static boolean isSafeId(ResourceLocation id) {
+        return StructureNames.isSafe(id.getNamespace(), id.getPath());
     }
 
     /** Forces the selection's chunks to generate so the capture is not full of air. */

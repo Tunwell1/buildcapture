@@ -2,6 +2,7 @@ package com.tunwell.buildcapture.capture;
 
 import com.tunwell.buildcapture.BuildCapture;
 import com.tunwell.buildcapture.config.BuildCaptureConfig;
+import com.tunwell.buildcapture.core.PreviewPacking;
 import com.tunwell.buildcapture.network.ModNetwork;
 import com.tunwell.buildcapture.network.PreviewDataPacket;
 import com.tunwell.buildcapture.network.StructureListPacket;
@@ -25,6 +26,7 @@ import net.minecraft.world.server.ServerWorld;
 import net.minecraftforge.fml.network.PacketDistributor;
 
 import javax.annotation.Nullable;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 
@@ -43,8 +45,6 @@ public final class StructureActions {
      */
     private static final int MAX_GHOST_BLOCKS = 150_000;
     private static final int MAX_GHOST_PALETTE = 1_536;
-    /** Positions are packed into 10 bits per axis in {@link PreviewDataPacket}. */
-    private static final int MAX_GHOST_AXIS = 1_024;
     private static final BlockState[] NO_STATES = new BlockState[0];
     private static final int[] NO_POSITIONS = new int[0];
 
@@ -72,7 +72,7 @@ public final class StructureActions {
      */
     public static void sendPreview(ServerPlayerEntity player, @Nullable ResourceLocation id) {
         MinecraftServer server = player.getServer();
-        if (id == null || server == null || !validId(id)) {
+        if (id == null || server == null || !CaptureExporter.isSafeId(id)) {
             return;
         }
         Template template = TemplateExport.load(server, id);
@@ -100,7 +100,8 @@ public final class StructureActions {
                     NO_STATES, NO_POSITIONS, NO_POSITIONS);
             return;
         }
-        if (sizeX > MAX_GHOST_AXIS || sizeY > MAX_GHOST_AXIS || sizeZ > MAX_GHOST_AXIS
+        if (sizeX > PreviewPacking.MAX_AXIS || sizeY > PreviewPacking.MAX_AXIS
+                || sizeZ > PreviewPacking.MAX_AXIS
                 || paletteList.size() > MAX_GHOST_PALETTE) {
             sendPreviewData(player, id, sizeX, sizeY, sizeZ, blocksList.size(), true,
                     NO_STATES, NO_POSITIONS, NO_POSITIONS);
@@ -148,7 +149,7 @@ public final class StructureActions {
             if (x < 0 || y < 0 || z < 0 || x >= sizeX || y >= sizeY || z >= sizeZ) {
                 continue;
             }
-            positions[cursor] = PreviewDataPacket.pack(x, y, z);
+            positions[cursor] = PreviewPacking.pack(x, y, z);
             indexes[cursor] = stateIndex;
             cursor++;
         }
@@ -199,44 +200,40 @@ public final class StructureActions {
                         palette, positions, indexes));
     }
 
-    /** Rejects traversal segments before an id is turned into a file path. */
-    private static boolean validId(ResourceLocation id) {
-        String namespace = id.getNamespace();
-        if (namespace.isEmpty() || ".".equals(namespace) || "..".equals(namespace)) {
-            return false;
-        }
-        for (String segment : id.getPath().split("/")) {
-            if (segment.isEmpty() || ".".equals(segment) || "..".equals(segment)) {
-                return false;
-            }
-        }
-        return true;
+    public enum PlaceStatus {
+        PLACED,
+        INVALID,
+        NOT_FOUND,
+        TOO_FAR,
+        OUT_OF_WORLD
     }
 
-    public static void place(ServerPlayerEntity player, @Nullable ResourceLocation id,
-                             int rotationSteps, BlockPos origin) {
-        if (id == null) {
-            fail(player, "buildcapture.capture.invalid_name");
-            return;
+    /**
+     * Checks and performs a placement. Both the command and the browser go
+     * through here so the distance, build-height and rotation rules cannot
+     * drift apart; the caller owns the wording of the result.
+     */
+    public static PlaceStatus place(ServerPlayerEntity player, @Nullable ResourceLocation id,
+                                    int rotationSteps, BlockPos origin) {
+        if (id == null || !CaptureExporter.isSafeId(id)) {
+            return PlaceStatus.INVALID;
         }
         Template template = TemplateExport.load(player.getServer(), id);
         if (template == null || template.getSize().equals(BlockPos.ZERO)) {
             template = StructureLibrary.load(player.getServer(), id);
         }
         if (template == null || template.getSize().equals(BlockPos.ZERO)) {
-            fail(player, "buildcapture.capture.not_found", id.toString());
-            return;
+            return PlaceStatus.NOT_FOUND;
         }
 
         ServerWorld world = player.getLevel();
         if (player.blockPosition().distSqr(origin) > MAX_PLACE_DISTANCE * MAX_PLACE_DISTANCE) {
-            fail(player, "buildcapture.capture.too_far");
-            return;
+            return PlaceStatus.TOO_FAR;
         }
         BlockPos size = template.getSize();
-        if (origin.getY() < 0 || origin.getY() + size.getY() > world.dimensionType().logicalHeight()) {
-            fail(player, "buildcapture.capture.out_of_world");
-            return;
+        if (origin.getY() < 0
+                || (long) origin.getY() + size.getY() > world.dimensionType().logicalHeight()) {
+            return PlaceStatus.OUT_OF_WORLD;
         }
 
         // Template rotation happens around the world origin, so the corner has to
@@ -249,31 +246,47 @@ public final class StructureActions {
                 .setIgnoreEntities(false)
                 .setKnownShape(true);
         template.placeInWorld(world, placementOrigin, settings, world.random);
-        player.sendMessage(new TranslationTextComponent(
-                "buildcapture.capture.placed", id.toString(),
-                origin.getX(), origin.getY(), origin.getZ(), rotationSteps * 90), Util.NIL_UUID);
+        return PlaceStatus.PLACED;
     }
 
     public static void delete(ServerPlayerEntity player, @Nullable ResourceLocation id) {
-        if (id == null || player.getServer() == null) {
+        if (id == null || !CaptureExporter.isSafeId(id) || player.getServer() == null) {
+            fail(player, "buildcapture.capture.invalid_name");
             return;
         }
-        boolean removed = false;
-
         Path worldFile = CaptureExporter.datapackPath(player.getServer(), id);
-        Path worldBackup = null;
-        if (worldFile.toFile().exists()) {
-            worldBackup = CaptureBackups.backup(player.getServer(), id, worldFile);
+        Path libraryFile = StructureLibrary.path(id);
+        boolean worldExists = worldFile != null && Files.exists(worldFile);
+        boolean libraryExists = libraryFile != null && Files.exists(libraryFile);
+        if (!worldExists && !libraryExists) {
+            fail(player, "buildcapture.capture.not_found", id.toString());
+            return;
+        }
+
+        // Back up everything before deleting anything: a failed backup must not
+        // leave a half-deleted capture that undo cannot restore.
+        Path worldBackup = worldExists
+                ? CaptureBackups.backup(player.getServer(), id, worldFile)
+                : null;
+        if (worldExists && worldBackup == null) {
+            fail(player, "buildcapture.capture.backup_failed", id.toString());
+            return;
+        }
+        Path libraryBackup = libraryExists
+                ? CaptureBackups.backup(player.getServer(), id, libraryFile, "library")
+                : null;
+        if (libraryExists && libraryBackup == null) {
+            fail(player, "buildcapture.capture.backup_failed", id.toString());
+            return;
+        }
+
+        boolean removed = false;
+        if (worldExists) {
             removed |= CaptureBackups.delete(worldFile);
         }
-
-        Path libraryFile = StructureLibrary.path(id);
-        Path libraryBackup = null;
-        if (libraryFile != null && libraryFile.toFile().exists()) {
-            libraryBackup = CaptureBackups.backup(player.getServer(), id, libraryFile, "library");
+        if (libraryExists) {
             removed |= CaptureBackups.delete(libraryFile);
         }
-
         if (!removed) {
             fail(player, "buildcapture.capture.not_found", id.toString());
             return;

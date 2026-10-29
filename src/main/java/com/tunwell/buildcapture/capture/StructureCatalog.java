@@ -75,7 +75,8 @@ public final class StructureCatalog {
 
         Path worldData = CaptureExporter.datapackDir(server).resolve("data");
         for (Path file : collect(worldData)) {
-            ResourceLocation id = toId(worldData, file);
+            String text = StructureLibrary.toId(worldData, file);
+            ResourceLocation id = text == null ? null : ResourceLocation.tryParse(text);
             if (id == null) {
                 continue;
             }
@@ -114,23 +115,6 @@ public final class StructureCatalog {
             BuildCapture.LOGGER.warn("Failed to list structures in {}", data, exception);
         }
         return files;
-    }
-
-    @Nullable
-    private static ResourceLocation toId(Path root, Path file) {
-        String relative = root.relativize(file).toString().replace('\\', '/');
-        int slash = relative.indexOf('/');
-        if (slash <= 0) {
-            return null;
-        }
-        String namespace = relative.substring(0, slash);
-        String rest = relative.substring(slash + 1);
-        String prefix = "structures/";
-        if (!rest.startsWith(prefix) || !rest.endsWith(".nbt")) {
-            return null;
-        }
-        return ResourceLocation.tryParse(namespace + ":"
-                + rest.substring(prefix.length(), rest.length() - 4));
     }
 
     private static long lengthOf(Path file) {

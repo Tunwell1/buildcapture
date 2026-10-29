@@ -1,6 +1,58 @@
 Build Capture changelog
 =======================
 
+1.1.7
+-----
+
+Import
+- The 512-blocks-per-side import limit is gone, so anything the selection can
+  capture can also be imported. `capture.importMaxMb` still caps the upload,
+  and the decompressed NBT is now bounded, so a small gzip bomb cannot exhaust
+  server memory.
+- Imported files are parsed through the same template loader that placement
+  uses before anything is written; a file that would fail to load is rejected
+  instead of being stored and listed.
+- An upload that stalls for two minutes is dropped instead of holding its
+  buffer until logout.
+
+Safety
+- Structure names with "." or ".." segments are rejected. 1.16.5's
+  ResourceLocation accepts them, which let import and delete reach outside the
+  structures folder.
+- A save or delete is aborted when the existing file cannot be backed up
+  first, so undo is never silently lost.
+- Structure files are written to a temporary file and moved into place
+  atomically; a crash mid-save no longer corrupts an existing capture.
+- The selection-drag packet now checks operator permissions like every other
+  serverbound packet.
+- A malformed browser action packet is ignored instead of throwing on the
+  server network thread.
+
+Selection and placement
+- Changing dimension clears the selection: the corners belong to one world,
+  and a portal trip used to save the same coordinates in the new dimension.
+- `/capture place` now uses the same distance, build-height and rotation checks
+  as the browser, so a tall structure near the ceiling is reported instead of
+  silently clipped.
+- The prefilled save name includes seconds, so two saves within a minute no
+  longer overwrite each other.
+
+Client
+- The browser's folder button no longer crashes on a library path sent by a
+  server running another OS.
+- The browser list is cleared on disconnect, so a server without the mod no
+  longer shows entries from the previous one.
+- Cached captures are cleared when the server stops and on `/capture reload`,
+  so switching singleplayer worlds cannot serve the previous world's copy.
+- A Forge client without the mod is no longer rejected on join. Forge reports
+  a missing channel as `ABSENT`, which the mod previously refused while
+  accepting only `ACCEPTVANILLA`; vanilla and mod-less Forge clients can now
+  join and use the commands, they just do not see the box or the browser.
+- Command feedback for a client without the mod is sent as plain English text
+  instead of raw translation keys such as `buildcapture.capture.list`; clients
+  with the mod keep their own language. `/capture gui` now explains that the
+  browser needs the client mod instead of silently doing nothing.
+
 1.1.6
 -----
 
