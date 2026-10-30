@@ -51,7 +51,8 @@ The server side does all the work; the mod is marked **required on the server, o
 | `/capture shrink <direction> [blocks]` | Shrink it from one side; the box keeps at least one block. |
 | `/capture move <direction> [blocks]` | Move the whole box without changing its size. |
 | `/capture save <name>` | Save the box as a datapack structure. |
-| `/capture place <name> [90\|180\|270]` | Place a capture in front of you. |
+| `/capture place <name> [90\|180\|270]` | Place a capture in front of you. Tab completes the stored names. |
+| `/capture info <name>` | Show the size, the file size and where the copies of a structure live. |
 | `/capture gui` | Open the structure browser (same as the `C` key). |
 | `/capture list` | List captures from the world and the shared library. |
 | `/capture undo` | Revert your last save, import or delete. |
@@ -75,7 +76,7 @@ Everything can be rebound under **Controls → "Build Capture"**.
 
 The corner/save keys run exactly the same server code as the commands, so the checks and messages are identical and the chat window is never needed.
 
-While a placement preview is active the same Controls category holds its own bindings: `R` turns the ghost, the arrow keys move it a block, `Page Up` / `Page Down` move it vertically, the face-edit key turns it with the wheel, and a separate *Wheel changes height* key (`Left Ctrl`) moves it up or down. A plain scroll moves the build five blocks. Minecraft cannot bind the wheel itself, so only the keys held with it are bound; the rest can take combinations such as `Ctrl+R`. The on-screen hint prints whatever you have bound.
+While a placement preview is active the same Controls category holds its own bindings: `R` turns the ghost, the arrow keys move it a block, `Page Up` / `Page Down` move it vertically, the face-edit key turns it with the wheel, and a separate *Wheel changes height* key (`V`) moves it up or down. A plain scroll moves the build five blocks. Minecraft cannot bind the wheel itself, so only the keys held with it are bound; the rest can take combinations such as `Ctrl+R`. The on-screen hint prints whatever you have bound.
 
 ## Editing the box
 

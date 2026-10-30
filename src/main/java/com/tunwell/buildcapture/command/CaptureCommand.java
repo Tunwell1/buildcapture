@@ -6,6 +6,7 @@ import com.tunwell.buildcapture.capture.CaptureExporter;
 import com.tunwell.buildcapture.capture.CaptureSelection;
 import com.tunwell.buildcapture.capture.CaptureUndo;
 import com.tunwell.buildcapture.capture.StructureActions;
+import com.tunwell.buildcapture.capture.StructureCatalog;
 import com.tunwell.buildcapture.capture.StructureLibrary;
 import com.tunwell.buildcapture.config.BuildCaptureConfig;
 import com.tunwell.buildcapture.network.CaptureBoxPacket;
@@ -17,7 +18,10 @@ import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.arguments.IntegerArgumentType;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
+import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
+import com.mojang.brigadier.suggestion.Suggestions;
+import com.mojang.brigadier.suggestion.SuggestionsBuilder;
 import net.minecraft.command.CommandSource;
 import net.minecraft.command.Commands;
 import net.minecraft.entity.player.ServerPlayerEntity;
@@ -50,6 +54,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Set;
 import java.util.TreeSet;
+import java.util.concurrent.CompletableFuture;
 import java.util.stream.Stream;
 
 /**
@@ -115,12 +120,15 @@ public final class CaptureCommand {
                                 .executes(context -> save(context.getSource(),
                                         StringArgumentType.getString(context, "name")))))
                 .then(Commands.literal("place")
-                        .then(Commands.argument("name", StringArgumentType.word())
-                                .executes(context -> place(context.getSource(),
-                                        StringArgumentType.getString(context, "name"), Rotation.NONE))
-                                .then(rotationNode("90", Rotation.CLOCKWISE_90))
-                                .then(rotationNode("180", Rotation.CLOCKWISE_180))
-                                .then(rotationNode("270", Rotation.COUNTERCLOCKWISE_90))))
+                        .then(Commands.argument("name", StringArgumentType.greedyString())
+                                .suggests(CaptureCommand::suggestIds)
+                                .executes(context -> placeNamed(context.getSource(),
+                                        StringArgumentType.getString(context, "name")))))
+                .then(Commands.literal("info")
+                        .then(Commands.argument("name", StringArgumentType.greedyString())
+                                .suggests(CaptureCommand::suggestIds)
+                                .executes(context -> info(context.getSource(),
+                                        StringArgumentType.getString(context, "name")))))
                 .then(Commands.literal("gui")
                         .executes(context -> openGui(context.getSource())))
                 .then(Commands.literal("list")
@@ -401,6 +409,10 @@ public final class CaptureCommand {
                 source.sendFailure(Messages.forSource(source, 
                         "buildcapture.capture.not_found", id.toString()));
                 return 0;
+            case UNREADABLE:
+                source.sendFailure(Messages.forSource(source,
+                        "buildcapture.capture.unreadable", id.toString()));
+                return 0;
             case TOO_FAR:
                 source.sendFailure(Messages.forSource(source, 
                         "buildcapture.capture.too_far"));
@@ -416,10 +428,34 @@ public final class CaptureCommand {
         }
     }
 
-    private static LiteralArgumentBuilder<CommandSource> rotationNode(
-            String literal, Rotation rotation) {
-        return Commands.literal(literal).executes(context -> place(
-                context.getSource(), StringArgumentType.getString(context, "name"), rotation));
+    /**
+     * {@code /capture place <name> [90|180|270]}. The name is a greedy argument so
+     * that namespaced and folder ids can be typed and suggested, which means the
+     * rotation arrives as part of the same string and is split back off here.
+     */
+    private static int placeNamed(CommandSource source, String raw) throws CommandSyntaxException {
+        String name = raw.trim();
+        Rotation rotation = Rotation.NONE;
+        int space = name.lastIndexOf(' ');
+        if (space >= 0) {
+            switch (name.substring(space + 1)) {
+                case "90":
+                    rotation = Rotation.CLOCKWISE_90;
+                    break;
+                case "180":
+                    rotation = Rotation.CLOCKWISE_180;
+                    break;
+                case "270":
+                    rotation = Rotation.COUNTERCLOCKWISE_90;
+                    break;
+                default:
+                    break;
+            }
+            if (rotation != Rotation.NONE) {
+                name = name.substring(0, space);
+            }
+        }
+        return place(source, name, rotation);
     }
 
     private static int rotationSteps(Rotation rotation) {
@@ -466,6 +502,71 @@ public final class CaptureCommand {
                     "buildcapture.capture.list_hint"), false);
         }
         return ids.size();
+    }
+
+    private static CompletableFuture<Suggestions> suggestIds(CommandContext<CommandSource> context,
+                                                             SuggestionsBuilder builder) {
+        for (String id : allIds(context.getSource().getServer())) {
+            if (id.startsWith(builder.getRemaining().toLowerCase(Locale.ROOT))) {
+                builder.suggest(id);
+            }
+        }
+        return builder.buildFuture();
+    }
+
+    /** Every structure id the browser and the commands can see, world first. */
+    private static List<String> allIds(@Nullable MinecraftServer server) {
+        Set<String> ids = new TreeSet<>();
+        if (server != null) {
+            ids.addAll(collectIds(CaptureExporter.datapackDir(server).resolve("data")));
+        }
+        ids.addAll(StructureLibrary.list());
+        return new ArrayList<>(ids);
+    }
+
+    private static int info(CommandSource source, String rawName) {
+        ResourceLocation id = parseId(rawName);
+        if (id == null) {
+            source.sendFailure(Messages.forSource(source, "buildcapture.capture.invalid_name"));
+            return 0;
+        }
+        Path world = CaptureExporter.datapackPath(source.getServer(), id);
+        Path library = StructureLibrary.path(id);
+        boolean haveWorld = world != null && Files.isRegularFile(world);
+        boolean haveLibrary = library != null && Files.isRegularFile(library);
+        if (!haveWorld && !haveLibrary) {
+            source.sendFailure(Messages.forSource(source,
+                    "buildcapture.capture.not_found", id.toString()));
+            return 0;
+        }
+
+        Path file = haveWorld ? world : library;
+        BlockPos size = StructureCatalog.sizeOf(file);
+        if (size.getX() <= 0) {
+            source.sendFailure(Messages.forSource(source,
+                    "buildcapture.capture.unreadable", id.toString()));
+            return 0;
+        }
+        long kilobytes = Math.max(1L, bytesOf(file) / 1024L);
+        source.sendSuccess(Messages.forSource(source, "buildcapture.capture.info",
+                id.toString(), size.getX(), size.getY(), size.getZ(), kilobytes), false);
+        if (haveWorld) {
+            source.sendSuccess(Messages.forSource(source, "buildcapture.capture.info_world",
+                    relative(source.getServer(), world)), false);
+        }
+        if (haveLibrary) {
+            source.sendSuccess(Messages.forSource(source, "buildcapture.capture.info_library",
+                    StructureLibrary.describe(library)), false);
+        }
+        return 1;
+    }
+
+    private static long bytesOf(Path file) {
+        try {
+            return Files.size(file);
+        } catch (IOException exception) {
+            return 0L;
+        }
     }
 
     private static List<String> collectIds(Path data) {

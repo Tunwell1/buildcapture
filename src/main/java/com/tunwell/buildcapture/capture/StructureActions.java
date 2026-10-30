@@ -29,6 +29,11 @@ import javax.annotation.Nullable;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
+import java.util.Set;
+import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 /**
  * Server side of the in-game browser: lists captures, places one at an explicit
@@ -48,19 +53,49 @@ public final class StructureActions {
     private static final BlockState[] NO_STATES = new BlockState[0];
     private static final int[] NO_POSITIONS = new int[0];
 
+    /**
+     * Walking the datapack and the library reads a header per structure, which
+     * is far too slow to do on the tick thread when a server has hundreds of
+     * captures. One worker thread scans, one list request per player at a time.
+     */
+    private static final ExecutorService SCAN_EXECUTOR = Executors.newSingleThreadExecutor(runnable -> {
+        Thread thread = new Thread(runnable, "buildcapture-catalog");
+        thread.setDaemon(true);
+        return thread;
+    });
+    private static final Set<UUID> SCAN_QUEUED = ConcurrentHashMap.newKeySet();
+
     private StructureActions() {
     }
 
     public static void sendList(ServerPlayerEntity player) {
-        if (player.getServer() == null) {
+        MinecraftServer server = player.getServer();
+        if (server == null || !SCAN_QUEUED.add(player.getUUID())) {
             return;
         }
-        List<StructureCatalog.Entry> entries = StructureCatalog.scan(player.getServer());
-        Path root = StructureLibrary.root();
-        String libraryPath = root == null ? "" : root.toAbsolutePath().toString();
-        ModNetwork.CHANNEL.send(PacketDistributor.PLAYER.with(() -> player),
-                new StructureListPacket(entries, libraryPath,
-                        CaptureSelection.last(player) != null));
+        UUID uuid = player.getUUID();
+        SCAN_EXECUTOR.execute(() -> {
+            SCAN_QUEUED.remove(uuid);
+            List<StructureCatalog.Entry> entries;
+            try {
+                entries = StructureCatalog.scan(server);
+            } catch (Exception exception) {
+                BuildCapture.LOGGER.warn("Failed to scan the structure catalog", exception);
+                return;
+            }
+            Path root = StructureLibrary.root();
+            String libraryPath = root == null ? "" : root.toAbsolutePath().toString();
+            List<StructureCatalog.Entry> result = entries;
+            server.execute(() -> {
+                ServerPlayerEntity current = server.getPlayerList().getPlayer(uuid);
+                if (current == null) {
+                    return;
+                }
+                ModNetwork.CHANNEL.send(PacketDistributor.PLAYER.with(() -> current),
+                        new StructureListPacket(result, libraryPath,
+                                CaptureSelection.last(current) != null));
+            });
+        });
     }
 
     /**
@@ -80,7 +115,9 @@ public final class StructureActions {
             template = StructureLibrary.load(server, id);
         }
         if (template == null || template.getSize().equals(BlockPos.ZERO)) {
-            fail(player, "buildcapture.capture.not_found", id.toString());
+            fail(player, stored(server, id)
+                    ? "buildcapture.capture.unreadable" : "buildcapture.capture.not_found",
+                    id.toString());
             return;
         }
 
@@ -204,8 +241,21 @@ public final class StructureActions {
         PLACED,
         INVALID,
         NOT_FOUND,
+        /** The file is there but the template loader rejected it. */
+        UNREADABLE,
         TOO_FAR,
         OUT_OF_WORLD
+    }
+
+    /** True when a file exists for this id, whatever its contents are. */
+    private static boolean stored(@Nullable MinecraftServer server, ResourceLocation id) {
+        if (server == null) {
+            return false;
+        }
+        Path world = CaptureExporter.datapackPath(server, id);
+        Path library = StructureLibrary.path(id);
+        return (world != null && Files.isRegularFile(world))
+                || (library != null && Files.isRegularFile(library));
     }
 
     /**
@@ -223,7 +273,7 @@ public final class StructureActions {
             template = StructureLibrary.load(player.getServer(), id);
         }
         if (template == null || template.getSize().equals(BlockPos.ZERO)) {
-            return PlaceStatus.NOT_FOUND;
+            return stored(player.getServer(), id) ? PlaceStatus.UNREADABLE : PlaceStatus.NOT_FOUND;
         }
 
         ServerWorld world = player.getLevel();

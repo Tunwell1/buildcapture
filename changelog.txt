@@ -1,6 +1,31 @@
 Build Capture changelog
 =======================
 
+1.1.8
+-----
+
+Server
+- Opening the structure browser no longer reads every captured file on the
+  server thread. The scan runs on its own worker, so a large library no longer
+  stalls the tick while it is listing.
+
+Files
+- A damaged `.nbt` file in the shared library is shown as "unreadable file" in
+  the browser, and `/capture place` says the file is corrupted instead of
+  pretending the structure does not exist.
+- `/capture place` now accepts namespaced and folder names such as
+  `buildcapture:castle/tower`; the argument stopped at the colon and the slash,
+  so only single lowercase words could be placed by command.
+
+Commands
+- Tab completion suggests the captured structure names for `/capture place` and
+  for the new `/capture info <name>`, which reports the dimensions, the file
+  size and the world and library copies it finds.
+
+Controls
+- The scroll-wheel height key defaults to V instead of Left Ctrl, which is
+  sprint. Players who never rebound it are moved off Ctrl automatically.
+
 1.1.7
 -----
 

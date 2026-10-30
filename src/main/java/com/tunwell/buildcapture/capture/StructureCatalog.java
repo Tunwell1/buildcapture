@@ -15,10 +15,10 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Comparator;
-import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Stream;
 
 /**
@@ -28,7 +28,7 @@ import java.util.stream.Stream;
  * browser should not re-parse a hundred structures.
  */
 public final class StructureCatalog {
-    private static final Map<String, Cached> CACHE = new HashMap<>();
+    private static final Map<String, Cached> CACHE = new ConcurrentHashMap<>();
 
     private StructureCatalog() {
     }

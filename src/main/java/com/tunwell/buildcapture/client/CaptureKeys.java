@@ -1,7 +1,9 @@
 package com.tunwell.buildcapture.client;
 
 import com.tunwell.buildcapture.BuildCapture;
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.settings.KeyBinding;
+import net.minecraft.client.util.InputMappings;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
@@ -58,11 +60,11 @@ public final class CaptureKeys {
     public static final KeyBinding PREVIEW_DOWN = new KeyBinding(
             "key.buildcapture.preview_down", GLFW.GLFW_KEY_PAGE_DOWN, CATEGORY);
 
-    // Hold modifier for the wheel's vertical move. The turn modifier is the same
-    // "edit" key the capture box uses, so Alt means "turn it" in both places and
-    // the Controls screen has no duplicate binding to flag.
+    // Hold modifier for the wheel's vertical move. V stands for vertical and is
+    // free in vanilla: Ctrl is sprint, Shift is sneak and Alt already turns the
+    // preview, so every obvious modifier was already spoken for.
     public static final KeyBinding WHEEL_VERTICAL = new KeyBinding(
-            "key.buildcapture.wheel_vertical", GLFW.GLFW_KEY_LEFT_CONTROL, CATEGORY);
+            "key.buildcapture.wheel_vertical", GLFW.GLFW_KEY_V, CATEGORY);
 
     private CaptureKeys() {
     }
@@ -83,7 +85,23 @@ public final class CaptureKeys {
             ClientRegistry.registerKeyBinding(PREVIEW_UP);
             ClientRegistry.registerKeyBinding(PREVIEW_DOWN);
             ClientRegistry.registerKeyBinding(WHEEL_VERTICAL);
+            moveWheelOffSprint();
             ClientDropHandler.install();
         });
+    }
+
+    /**
+     * Players who already ran 1.1.7 have the old Left Ctrl default written into
+     * options.txt, so a changed default alone would not free their sprint key.
+     */
+    private static void moveWheelOffSprint() {
+        Minecraft minecraft = Minecraft.getInstance();
+        InputMappings.Input bound = WHEEL_VERTICAL.getKey();
+        if (minecraft == null || bound.getType() != InputMappings.Type.KEYSYM
+                || bound.getValue() != GLFW.GLFW_KEY_LEFT_CONTROL) {
+            return;
+        }
+        WHEEL_VERTICAL.setKey(InputMappings.Type.KEYSYM.getOrCreate(GLFW.GLFW_KEY_V));
+        minecraft.options.save();
     }
 }

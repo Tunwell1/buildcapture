@@ -102,6 +102,11 @@ public final class StructureActionPacket {
                                     "buildcapture.capture.not_found", String.valueOf(parsed)),
                                     Util.NIL_UUID);
                             break;
+                        case UNREADABLE:
+                            player.sendMessage(new TranslationTextComponent(
+                                    "buildcapture.capture.unreadable", String.valueOf(parsed)),
+                                    Util.NIL_UUID);
+                            break;
                         case TOO_FAR:
                             player.sendMessage(new TranslationTextComponent(
                                     "buildcapture.capture.too_far"), Util.NIL_UUID);

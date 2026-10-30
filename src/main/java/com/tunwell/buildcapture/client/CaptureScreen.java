@@ -238,6 +238,10 @@ public final class CaptureScreen extends Screen {
             return;
         }
         if (entry.size().getX() <= 0) {
+            if (this.minecraft != null && this.minecraft.player != null) {
+                this.minecraft.player.displayClientMessage(new TranslationTextComponent(
+                        "buildcapture.capture.unreadable", entry.id().toString()), false);
+            }
             return;
         }
         PlacementPreview.start(entry, rotationSteps);

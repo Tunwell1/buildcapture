@@ -71,7 +71,7 @@ like an object:
 
 - drag it with the left mouse button: it slides on the ground plane under the
   cursor and keeps its height;
-- `Ctrl`+wheel moves it up or down (rebindable, like every wheel modifier);
+- `V`+wheel moves it up or down (rebindable, like every wheel modifier);
 - the arrow keys nudge it one block, `Page Up` / `Page Down` move it vertically;
 - `Shift` gives five-block steps.
 
@@ -99,7 +99,7 @@ translucent block models inside a green footprint box at the target spot (red
 when it does not fit the build height), and only the nearest surface is drawn,
 so you can still see the world behind it. Structures over 150,000 blocks fall
 back to the box alone. A plain scroll moves it five blocks, `Alt`+scroll turns it
-a quarter turn, `Ctrl`+scroll changes the height and the arrow keys move it a
+a quarter turn, `V`+scroll changes the height and the arrow keys move it a
 block. Right-click (or Enter) places it; middle-click or Escape cancels. Nothing
 is written until you confirm, and the server re-checks the id, distance and
 build height.
@@ -145,7 +145,8 @@ together.
 | `/capture shrink <dir> [n]` | Shrink it from one side. |
 | `/capture move <dir> [n]` | Move the whole box without changing its size. |
 | `/capture save <name>` | Save the box as a datapack structure. |
-| `/capture place <name> [90\|180\|270]` | Place a captured structure in front of you. |
+| `/capture place <name> [90\|180\|270]` | Place a captured structure in front of you. Tab completes stored names. |
+| `/capture info <name>` | Show a structure's size, file size and the copies in the world and the library. |
 | `/capture gui` | Open the structure browser (same as the `C` key). |
 | `/capture list` | List captures from the world and the library. |
 | `/capture undo` | Revert your last save, import or delete. |
@@ -167,7 +168,7 @@ not needed for the normal flow.
 | `Left Alt` (hold) | Edit the selection: move with the wheel, resize by dragging a face. Turns the placement preview with the wheel. |
 | `R` | Turn the placement preview. |
 | Arrows / `Page Up` / `Page Down` | Move the preview one block. |
-| `Left Ctrl` (hold) + wheel | Change the preview's height. |
+| `V` (hold) + wheel | Change the preview's height. |
 
 Every one of these can be rebound, including key combinations (for example
 `Ctrl+R`): Forge records the modifier held when the new key is pressed. The
