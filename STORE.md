@@ -1,4 +1,4 @@
-# Build Capture - store copy (1.1.7)
+# Build Capture - store copy (1.1.8)
 
 Ready-to-paste text for Modrinth and CurseForge. Keep it in sync with the
 released jar.
@@ -8,14 +8,14 @@ released jar.
 | Field | Value |
 | --- | --- |
 | Name | Build Capture |
-| Version | 1.1.7 |
+| Version | 1.1.8 |
 | Minecraft | 1.16.5 |
 | Loader | Forge 36.2.42 or newer (1.16.x) |
 | License | MIT |
 | Environment | Client and server |
 | Modrinth categories | Utility, Management |
 | CurseForge categories | Server Utility, Utility & QoL |
-| File | `buildcapture-1.1.7+mc1.16.5+forge.jar` |
+| File | `buildcapture-1.1.8+mc1.16.5+forge.jar` |
 | Mod id | `buildcapture` |
 
 Short summary (Modrinth / CurseForge "Summary", under 256 characters):
